@@ -1,0 +1,104 @@
+# ================================
+# .NET / Visual Studio
+# ================================
+
+bin/
+obj/
+.vs/
+.vscode/
+
+*.user
+*.userosscache
+*.suo
+*.userprefs
+
+# Visual Studio Code
+.history/
+*.code-workspace
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# ================================
+# Build Output
+# ================================
+
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# ================================
+# NuGet
+# ================================
+
+*.nupkg
+*.snupkg
+
+# NuGet package output folder
+packages/
+
+# Local NuGet cache
+.nuget/
+
+# ================================
+# Test Results
+# ================================
+
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# ================================
+# Logs
+# ================================
+
+*.log
+logs/
+
+# ================================
+# OS Files
+# ================================
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ================================
+# Temporary Files
+# ================================
+
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# ================================
+# Secrets / Local Configuration
+# ================================
+
+.env
+.env.*
+!.env.example
+
+# User-specific configuration
+appsettings.Development.json
+appsettings.Local.json
+
+# ================================
+# GitHub Actions
+# ================================
+
+# Don't ignore workflow files
+# .github/workflows/ should be committed
+
+# ================================
+# Generated Documentation
+# ================================
+
+*.xml

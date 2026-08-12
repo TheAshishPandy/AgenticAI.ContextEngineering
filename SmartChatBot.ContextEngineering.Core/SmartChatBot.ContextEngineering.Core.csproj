@@ -5,6 +5,7 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<LangVersion>13.0</LangVersion>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 
 		<!-- NuGet Package -->
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>

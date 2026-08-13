@@ -1,0 +1,15 @@
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\obj\Debug\net9.0\SmartChatBot.ContextEngineering.Core.csproj.AssemblyReference.cache
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\obj\Debug\net9.0\SmartChatBot.ContextEngineering.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\obj\Debug\net9.0\SmartChatBot.ContextEngineering.Core.AssemblyInfoInputs.cache
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\obj\Debug\net9.0\SmartChatBot.ContextEngineering.Core.AssemblyInfo.cs
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\obj\Debug\net9.0\SmartChatBot.ContextEngineering.Core.csproj.CoreCompileInputs.cache
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\bin\Debug\net9.0\SmartChatBot.ContextEngineering.Core.deps.json
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\bin\Debug\net9.0\SmartChatBot.ContextEngineering.Core.dll
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\bin\Debug\net9.0\SmartChatBot.ContextEngineering.Core.pdb
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\bin\Debug\net9.0\SmartChatBot.ContextEngineering.Core.xml
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\obj\Debug\net9.0\SmartChatBot.ContextEngineering.Core.dll
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\obj\Debug\net9.0\refint\SmartChatBot.ContextEngineering.Core.dll
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\obj\Debug\net9.0\SmartChatBot.ContextEngineering.Core.xml
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\obj\Debug\net9.0\SmartChatBot.ContextEngineering.Core.pdb
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\obj\Debug\net9.0\ref\SmartChatBot.ContextEngineering.Core.dll
+C:\Ashish\PGW\SmartChatBot.ContextEngineering\SmartChatBot.ContextEngineering.Core\obj\Debug\net9.0\SmartChatBot.ContextEngineering.Core.sourcelink.json

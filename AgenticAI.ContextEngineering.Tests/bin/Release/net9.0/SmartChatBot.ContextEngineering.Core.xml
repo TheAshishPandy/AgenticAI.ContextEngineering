@@ -1,0 +1,617 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SmartChatBot.ContextEngineering.Core</name>
+    </assembly>
+    <members>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Extensions.SearchServiceCollectionExtensions.AddEmbeddingGenerator``1(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Register a custom embedding generator
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Interfaces.IContextCompressor">
+            <summary>
+            Main Context Compressor interface
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Interfaces.ITokenEstimator">
+            <summary>
+            Token Estimator interface
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Interfaces.ISecretRedactor">
+            <summary>
+            Secret Redactor interface
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Interfaces.IToolResultPruner">
+            <summary>
+            Tool Result Pruner interface
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Interfaces.IAnchorProtection">
+            <summary>
+            Anchor Protection interface
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Interfaces.IProgressiveCompression">
+            <summary>
+            Progressive Compression interface
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Interfaces.ILLMAsJudge">
+            <summary>
+            LLM-as-Judge interface
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Interfaces.IDegradationDetector">
+            <summary>
+            Degradation Detector interface
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Interfaces.IAppendOnlyMemory">
+            <summary>
+            Append-Only Memory interface
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Interfaces.ILongTermMemory">
+            <summary>
+            Long-Term Memory interface
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper">
+            <summary>
+            Helper class for document upload and processing operations
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetSupportedExtensions">
+            <summary>
+            Get supported file extensions
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetSupportedExtensionsWithDescriptions">
+            <summary>
+            Get supported extensions with descriptions
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetDocumentType(System.String)">
+            <summary>
+            Get document type from file extension
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetDocumentTypeFromPath(System.String)">
+            <summary>
+            Get document type from file path
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.IsSupportedExtension(System.String)">
+            <summary>
+            Check if file extension is supported
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.IsSupportedFile(System.String)">
+            <summary>
+            Check if file is supported based on path
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetFileCategory(System.String)">
+            <summary>
+            Get file category (Text, Code, Document, etc.)
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetFileCategoryFromPath(System.String)">
+            <summary>
+            Get file category from file path
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetFileSize(System.Int64)">
+            <summary>
+            Get file size in human-readable format
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetFileInfo(System.String)">
+            <summary>
+            Extract file information
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetDetailedFileInfo(System.String)">
+            <summary>
+            Get detailed file information
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetMultipleFileInfo(System.Collections.Generic.List{System.String})">
+            <summary>
+            Get file information from multiple files
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.ValidateFile(System.String,System.Int64)">
+            <summary>
+            Validate file before upload
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.ValidateFiles(System.Collections.Generic.List{System.String},System.Int64)">
+            <summary>
+            Validate multiple files
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.ReadTextContentAsync(System.String,System.Text.Encoding)">
+            <summary>
+            Read text content from file
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.ReadBinaryContentAsync(System.String)">
+            <summary>
+            Read file content as byte array
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.ReadMultipleTextContentAsync(System.Collections.Generic.List{System.String},System.Text.Encoding)">
+            <summary>
+            Read text content from multiple files
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.ChunkText(System.String,System.Int32,System.Int32)">
+            <summary>
+            Chunk text content into smaller pieces
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.ChunkBySentences(System.String,System.Int32)">
+            <summary>
+            Chunk text by sentences
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.ChunkByParagraphs(System.String)">
+            <summary>
+            Chunk text by paragraphs
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetDirectoryStatistics(System.String)">
+            <summary>
+            Get file statistics for a directory
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetSupportedFilesFromDirectory(System.String)">
+            <summary>
+            Get all supported files from a directory
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Core.Helper.DocumentUploaderHelper.GetFileTree(System.String)">
+            <summary>
+            Get file tree structure
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.Anchor">
+            <summary>
+            Anchor - protected context element
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.AnchorType">
+            <summary>
+            Anchor type
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.CompressableContext">
+            <summary>
+            Compressable context object
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.ChatMessage">
+            <summary>
+            Chat message
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.ToolResult">
+            <summary>
+            Tool result
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.CompressionResult">
+            <summary>
+            Compression result
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.CompressionStep">
+            <summary>
+            Compression step
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.CompressionOptions">
+            <summary>
+            Compression options
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.EvaluationCriterion">
+            <summary>
+            Evaluation criterion
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.EvaluationResult">
+            <summary>
+            Evaluation result
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.ComparisonResult">
+            <summary>
+            Comparison result
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.DegradationReport">
+            <summary>
+            Degradation report
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.MemoryEntry">
+            <summary>
+            Memory entry
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.MemoryType">
+            <summary>
+            Memory type
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.Document">
+            <summary>
+            Document model for indexing and searching
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Models.EmbeddingBackend">
+            <summary>
+            Embedding backend types
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Search.BM25Scorer">
+            <summary>
+            BM25 (Best Matching 25) scoring algorithm
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.BM25Scorer.Score(System.Collections.Generic.Dictionary{System.String,System.Int32},System.Int32)">
+            <summary>
+            Calculate BM25 score for a document
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.BM25Scorer.GetTermImportance(System.String)">
+            <summary>
+            Calculate term importance (IDF)
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.BM25Scorer.GetTermScores(System.Collections.Generic.Dictionary{System.String,System.Int32},System.Int32)">
+            <summary>
+            Get top scoring terms for a document
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Search.CosineSimilarity">
+            <summary>
+            Cosine similarity for vector comparisons
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.CosineSimilarity.Calculate(System.Single[],System.Single[])">
+            <summary>
+            Calculate cosine similarity between two vectors
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.CosineSimilarity.CalculateSimilarities(System.Single[],System.Collections.Generic.List{System.Single[]})">
+            <summary>
+            Calculate similarity between a vector and multiple vectors
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.CosineSimilarity.Normalize(System.Single[])">
+            <summary>
+            Normalize a vector to unit length
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.HybridSearchEngine.HybridSearchAsync(SmartChatBot.ContextEngineering.Core.Models.SearchRequest,System.Threading.CancellationToken)">
+            <summary>
+            Perform hybrid search (lexical + semantic with RRF)
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.HybridSearchEngine.HybridSearchWithWeightsAsync(SmartChatBot.ContextEngineering.Core.Models.SearchRequest,System.Double,System.Double,System.Threading.CancellationToken)">
+            <summary>
+            Hybrid search with custom weights
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.HybridSearchEngine.RerankResultsAsync(System.Collections.Generic.List{SmartChatBot.ContextEngineering.Core.Models.SearchResult},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Rerank results using semantic relevance
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.ReciprocalRankFusion.FuseResults(System.Collections.Generic.List{SmartChatBot.ContextEngineering.Core.Models.SearchResult},System.Collections.Generic.List{SmartChatBot.ContextEngineering.Core.Models.SearchResult},System.Int32,System.Int32)">
+            <summary>
+            Fuses multiple ranked result lists using RRF
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.ReciprocalRankFusion.BuildRankMap(System.Collections.Generic.List{SmartChatBot.ContextEngineering.Core.Models.SearchResult})">
+            <summary>
+            Build rank map (1-based ranking)
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.ReciprocalRankFusion.FuseWithWeights(System.Collections.Generic.List{SmartChatBot.ContextEngineering.Core.Models.SearchResult},System.Collections.Generic.List{SmartChatBot.ContextEngineering.Core.Models.SearchResult},System.Double,System.Double,System.Int32)">
+            <summary>
+            Fuse with weighted scores (alternative to RRF)
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SearchIndex.IndexDocument(SmartChatBot.ContextEngineering.Core.Models.Document)">
+            <summary>
+            Index a document
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SearchIndex.IndexDocuments(System.Collections.Generic.IEnumerable{SmartChatBot.ContextEngineering.Core.Models.Document})">
+            <summary>
+            Index multiple documents
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SearchIndex.RemoveDocument(System.String)">
+            <summary>
+            Remove a document
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SearchIndex.GetDocument(System.String)">
+            <summary>
+            Get document by ID
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SearchIndex.GetAllDocuments">
+            <summary>
+            Get all documents
+            </summary>
+        </member>
+        <member name="P:SmartChatBot.ContextEngineering.Core.Search.SearchIndex.Count">
+            <summary>
+            Get document count
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SearchIndex.GetTermFrequencies(System.String)">
+            <summary>
+            Get term frequencies for a document
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SearchIndex.GetDocumentFrequencies">
+            <summary>
+            Get document frequencies
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SearchIndex.GetAllEmbeddings">
+            <summary>
+            Get all embeddings
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SearchIndex.GetAverageDocumentLength">
+            <summary>
+            Get average document length
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SearchIndex.Clear">
+            <summary>
+            Clear all indexed documents
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SearchIndex.Tokenize(System.String)">
+            <summary>
+            Tokenize text
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SemanticSearch.SearchAsync(SmartChatBot.ContextEngineering.Core.Models.SearchRequest,System.Single[],System.Threading.CancellationToken)">
+            <summary>
+            Perform semantic (vector) search
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.SemanticSearch.MultiVectorSearchAsync(SmartChatBot.ContextEngineering.Core.Models.SearchRequest,System.Collections.Generic.List{System.Single[]},System.Threading.CancellationToken)">
+            <summary>
+            Perform search with multiple query vectors (for MMR/query expansion)
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer">
+            <summary>
+            TF-IDF (Term Frequency-Inverse Document Frequency) scoring algorithm
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.PreCalculateIDF">
+            <summary>
+            Pre-calculate IDF values for all terms
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.Score(System.Collections.Generic.Dictionary{System.String,System.Int32})">
+            <summary>
+            Calculate TF-IDF score for a document
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.ScoreWithLengthNormalization(System.Collections.Generic.Dictionary{System.String,System.Int32},System.Int32,System.Double,System.Double,System.Double)">
+            <summary>
+            Calculate TF-IDF score with BM25-style length normalization
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.GetTermScores(System.Collections.Generic.Dictionary{System.String,System.Int32})">
+            <summary>
+            Calculate TF-IDF scores for all terms in a document
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.ScoreTerm(System.String,System.Int32)">
+            <summary>
+            Calculate TF-IDF for a single term
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.CalculateIDF(System.String)">
+            <summary>
+            Calculate Inverse Document Frequency (IDF) for a term
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.GetDocumentFrequency(System.String)">
+            <summary>
+            Get document frequency for a term
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.GetIDF(System.String)">
+            <summary>
+            Get IDF value for a term (from cache)
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.GetTopTerms(System.Collections.Generic.Dictionary{System.String,System.Int32},System.Int32)">
+            <summary>
+            Get top scoring terms
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.CalculateSimilarity(System.Collections.Generic.Dictionary{System.String,System.Int32},System.Collections.Generic.Dictionary{System.String,System.Int32})">
+            <summary>
+            Calculate TF-IDF similarity between two documents
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.CosineSimilarity(System.Collections.Generic.List{System.Double},System.Collections.Generic.List{System.Double})">
+            <summary>
+            Calculate cosine similarity between two vectors
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.BuildTFIDFVector(System.Collections.Generic.Dictionary{System.String,System.Int32})">
+            <summary>
+            Build TF-IDF vector for a document
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.Tokenize(System.String)">
+            <summary>
+            Tokenize text into terms
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.BuildTermFrequencies(System.String)">
+            <summary>
+            Build term frequencies from text
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.UpdateDocumentFrequencies(System.Collections.Generic.List{System.Collections.Generic.Dictionary{System.String,System.Int32}})">
+            <summary>
+            Update document frequencies with new documents
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Search.TFIDFScorer.GetStatistics">
+            <summary>
+            Get statistics about the TF-IDF model
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Search.TFIDFStatistics">
+            <summary>
+            TF-IDF statistics
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Upload.DocumentUploader">
+            <summary>
+            Handles document uploading, processing, and indexing
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Upload.DocumentUploader.UploadDocumentAsync(SmartChatBot.ContextEngineering.Core.Models.DocumentUploadRequest,System.Threading.CancellationToken)">
+            <summary>
+            Upload and index a single document
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Upload.DocumentUploader.UploadDocumentsAsync(System.Collections.Generic.List{SmartChatBot.ContextEngineering.Core.Models.DocumentUploadRequest},System.Threading.CancellationToken)">
+            <summary>
+            Upload multiple documents
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Upload.DocumentUploader.UploadDirectoryAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Upload documents from a directory
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Upload.DocumentUploader.ChunkDocument(System.String,System.Int32)">
+            <summary>
+            Chunk a document into smaller pieces
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Upload.EmbeddingGenerator.GenerateEmbeddingAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Generate embedding for a single text
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Upload.EmbeddingGenerator.GenerateEmbeddingsAsync(System.Collections.Generic.List{System.String},System.Threading.CancellationToken)">
+            <summary>
+            Generate embeddings for multiple texts
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Upload.EmbeddingGenerator.GenerateHashEmbedding(System.String)">
+            <summary>
+            Generate deterministic hash-based embedding (fallback when no ML model)
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Upload.EmbeddingGenerator.GetHashCode(System.String,System.Int32)">
+            <summary>
+            Get hash code for text with seed
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Upload.EmbeddingGenerator.CalculateSimilarity(System.Single[],System.Single[])">
+            <summary>
+            Calculate cosine similarity between two embeddings
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Upload.EmbeddingGenerator.FindNearestNeighbors(System.Single[],System.Collections.Generic.List{System.Single[]},System.Int32)">
+            <summary>
+            Find nearest neighbors using cosine similarity
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Upload.EmbeddingGenerator.BatchGenerateEmbeddingsAsync(System.Collections.Generic.List{System.String},System.Int32,System.Action{System.Int32,System.Int32},System.Threading.CancellationToken)">
+            <summary>
+            Batch process embeddings with progress tracking
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Upload.EmbeddingGenerator.GetStatistics">
+            <summary>
+            Get embedding statistics
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Upload.EmbeddingStatistics">
+            <summary>
+            Embedding backend types
+            </summary>
+            <summary>
+            Embedding statistics
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Upload.IEmbeddingService">
+            <summary>
+            Interface for embedding service
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Embeddings.MockEmbeddingGenerator">
+            <summary>
+            Mock embedding generator for testing (no external dependencies)
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Services.AttentionOptimizer">
+            <summary>
+            Optimizes context placement for U-shaped attention patterns
+            Models pay more attention to beginning and end of context
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Services.AttentionOptimizer.OptimizeAsync(SmartChatBot.ContextEngineering.Core.Models.CompressableContext,System.Collections.Generic.List{SmartChatBot.ContextEngineering.Core.Models.Anchor},System.Threading.CancellationToken)">
+            <summary>
+            Reorder context for optimal model attention
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Services.AttentionOptimizer.AnalyzeAttention(SmartChatBot.ContextEngineering.Core.Models.CompressableContext)">
+            <summary>
+            Analyze attention distribution of current context
+            </summary>
+        </member>
+        <member name="M:SmartChatBot.ContextEngineering.Core.Services.AttentionOptimizer.GetRecommendedPlacement(SmartChatBot.ContextEngineering.Core.Models.CompressableContext,SmartChatBot.ContextEngineering.Core.Services.MessageImportance)">
+            <summary>
+            Get recommended placement for new messages
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Strategies.AnchorProtection">
+            <summary>
+            Identifies and protects critical context elements (anchors)
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Strategies.ProgressiveCompression">
+            <summary>
+            Applies progressive compression tiers to reduce token count
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Strategies.SecretRedactor">
+            <summary>
+            Redacts sensitive information from context (PII, API keys, etc.)
+            </summary>
+        </member>
+        <member name="T:SmartChatBot.ContextEngineering.Core.Strategies.ToolResultPruner">
+            <summary>
+            Prunes and compacts large tool outputs
+            </summary>
+        </member>
+    </members>
+</doc>

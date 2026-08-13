@@ -1,0 +1,871 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\tokenreducer\\symbolexpander.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\tokenreducer\\symbolexpander.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\smartchatbot.contextengineering.core.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\smartchatbot.contextengineering.core.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\tokenreducer\\tokenreducerengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\tokenreducer\\tokenreducerengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\extensions\\servicecollectionextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\extensions\\servicecollectionextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\extensions\\searchservicecollectionextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\extensions\\searchservicecollectionextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\memory\\appendonlymemory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\memory\\appendonlymemory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\tokenreducer\\semanticclusterer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\tokenreducer\\semanticclusterer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\tokenreducer\\importgraph.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\tokenreducer\\importgraph.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\tokenreducer\\hybridretriever.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\tokenreducer\\hybridretriever.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\tokenreducer\\astchunker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\tokenreducer\\astchunker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\search\\bm25scorer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\search\\bm25scorer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\search\\hybridsearch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\search\\hybridsearch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\tokenreducer\\textrankcompressor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\tokenreducer\\textrankcompressor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\models\\tokenreducer\\tokenreducermodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\models\\tokenreducer\\tokenreducermodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\models\\search\\documentmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\models\\search\\documentmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\models\\upload\\documentprocessingresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\models\\upload\\documentprocessingresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\embeddings\\tokenreducerextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\embeddings\\tokenreducerextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E5A40CB7-B79C-465B-9929-EB8C1697A334}|SmartChatBot.ContextEngineering.Demo\\SmartChatBot.ContextEngineering.Demo.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.demo\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{E5A40CB7-B79C-465B-9929-EB8C1697A334}|SmartChatBot.ContextEngineering.Demo\\SmartChatBot.ContextEngineering.Demo.csproj|solutionrelative:smartchatbot.contextengineering.demo\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\upload\\embeddinggenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\upload\\embeddinggenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\models\\search\\searchoptions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\models\\search\\searchoptions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\models\\upload\\documentmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\models\\upload\\documentmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\upload\\documentprocessor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\upload\\documentprocessor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\upload\\documentuploader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\upload\\documentuploader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E5A40CB7-B79C-465B-9929-EB8C1697A334}|SmartChatBot.ContextEngineering.Demo\\SmartChatBot.ContextEngineering.Demo.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.demo\\searchdemo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E5A40CB7-B79C-465B-9929-EB8C1697A334}|SmartChatBot.ContextEngineering.Demo\\SmartChatBot.ContextEngineering.Demo.csproj|solutionrelative:smartchatbot.contextengineering.demo\\searchdemo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E5A40CB7-B79C-465B-9929-EB8C1697A334}|SmartChatBot.ContextEngineering.Demo\\SmartChatBot.ContextEngineering.Demo.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.demo\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E5A40CB7-B79C-465B-9929-EB8C1697A334}|SmartChatBot.ContextEngineering.Demo\\SmartChatBot.ContextEngineering.Demo.csproj|solutionrelative:smartchatbot.contextengineering.demo\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\search\\semanticsearch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\search\\semanticsearch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\search\\lexicalsearch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\search\\lexicalsearch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\search\\tfidfscorer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\search\\tfidfscorer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\embeddings\\mockembeddinggenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\embeddings\\mockembeddinggenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\embeddings\\iembeddinggenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\embeddings\\iembeddinggenerator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\search\\cosinesimilarity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\search\\cosinesimilarity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\search\\searchindex.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\search\\searchindex.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\search\\reciprocalrankfusion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\search\\reciprocalrankfusion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\models\\search\\searchmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\models\\search\\searchmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\interfaces\\search\\isearchindex.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\interfaces\\search\\isearchindex.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\interfaces\\search\\isearchengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\interfaces\\search\\isearchengine.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\interfaces\\imemoryinterfaces.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\interfaces\\imemoryinterfaces.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\services\\contextcompressor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\services\\contextcompressor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\strategies\\attentionoptimizer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\strategies\\attentionoptimizer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\strategies\\anchorprotection.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\strategies\\anchorprotection.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\models\\compressionmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\models\\compressionmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\services\\tokenestimator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\services\\tokenestimator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\evaluation\\llmasjudge.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\evaluation\\llmasjudge.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\strategies\\secretredactor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\strategies\\secretredactor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Program Files\\dotnet\\sdk\\9.0.305\\Sdks\\NuGet.Build.Tasks.Pack\\build\\NuGet.Build.Tasks.Pack.targets||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\readme.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\readme.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{6688AA0C-89EA-45A8-99A2-F667204632AC}|SmartChatBot.ContextEngineering.Tests\\SmartChatBot.ContextEngineering.Tests.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.tests\\unittest1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{6688AA0C-89EA-45A8-99A2-F667204632AC}|SmartChatBot.ContextEngineering.Tests\\SmartChatBot.ContextEngineering.Tests.csproj|solutionrelative:smartchatbot.contextengineering.tests\\unittest1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\strategies\\toolresultpruner.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\strategies\\toolresultpruner.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\strategies\\progressivecompression.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\strategies\\progressivecompression.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\cleanup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:cleanup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\models\\memorymodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\models\\memorymodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\models\\evaluationmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\models\\evaluationmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|c:\\ashish\\pgw\\smartchatbot.contextengineering\\smartchatbot.contextengineering.core\\core\\models\\anchormodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EB984C6D-946C-4CC9-BB42-E9FA64D5A3DF}|SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj|solutionrelative:smartchatbot.contextengineering.core\\core\\models\\anchormodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "SymbolExpander.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\SymbolExpander.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\SymbolExpander.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\SymbolExpander.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\SymbolExpander.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-13T05:36:43.784Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "AppendOnlyMemory.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Memory\\AppendOnlyMemory.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Memory\\AppendOnlyMemory.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Memory\\AppendOnlyMemory.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Memory\\AppendOnlyMemory.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T12:06:16.147Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "SemanticClusterer.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\SemanticClusterer.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\SemanticClusterer.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\SemanticClusterer.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\SemanticClusterer.cs",
+              "ViewState": "AgIAAKQAAAAAAAAAAAAuwLUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T12:04:49.994Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "TokenReducerEngine.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\TokenReducerEngine.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\TokenReducerEngine.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\TokenReducerEngine.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\TokenReducerEngine.cs",
+              "ViewState": "AgIAAOIAAAAAAAAAAAAewO0AAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T12:03:18.39Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ServiceCollectionExtensions.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Extensions\\ServiceCollectionExtensions.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Extensions\\ServiceCollectionExtensions.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Extensions\\ServiceCollectionExtensions.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Extensions\\ServiceCollectionExtensions.cs",
+              "ViewState": "AgIAADYAAAAAAAAAAAAewDkAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T10:20:18.577Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "SearchServiceCollectionExtensions.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Extensions\\SearchServiceCollectionExtensions.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Extensions\\SearchServiceCollectionExtensions.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Extensions\\SearchServiceCollectionExtensions.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Extensions\\SearchServiceCollectionExtensions.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAgwDkAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:24:39.275Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "SmartChatBot.ContextEngineering.Core.csproj",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\SmartChatBot.ContextEngineering.Core.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-08-11T10:59:25.237Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "ImportGraph.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\ImportGraph.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\ImportGraph.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\ImportGraph.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\ImportGraph.cs",
+              "ViewState": "AgIAAKQAAAAAAAAAAAAAwL0AAAA7AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-13T05:36:41.34Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "HybridRetriever.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\HybridRetriever.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\HybridRetriever.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\HybridRetriever.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\HybridRetriever.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-13T05:35:52.925Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "ASTChunker.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\ASTChunker.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\ASTChunker.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\ASTChunker.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\ASTChunker.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-13T05:35:54.65Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "BM25Scorer.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\BM25Scorer.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\BM25Scorer.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\BM25Scorer.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\BM25Scorer.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:34:10.175Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "HybridSearch.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\HybridSearch.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\HybridSearch.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\HybridSearch.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\HybridSearch.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:42:39.91Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "TextRankCompressor.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\TextRankCompressor.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\TextRankCompressor.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\TextRankCompressor.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\TokenReducer\\TextRankCompressor.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T12:04:48.457Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "TokenReducerModels.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\TokenReducer\\TokenReducerModels.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\TokenReducer\\TokenReducerModels.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\TokenReducer\\TokenReducerModels.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\TokenReducer\\TokenReducerModels.cs",
+              "ViewState": "AgIAAEoAAAAAAAAAAAAAAAsAAABJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T12:05:39.609Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "DocumentProcessingResult.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\Upload\\DocumentProcessingResult.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\Upload\\DocumentProcessingResult.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\Upload\\DocumentProcessingResult.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\Upload\\DocumentProcessingResult.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEAAAABSAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T07:38:11.413Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "TokenReducerExtensions.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Embeddings\\TokenReducerExtensions.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Embeddings\\TokenReducerExtensions.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Embeddings\\TokenReducerExtensions.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Embeddings\\TokenReducerExtensions.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T12:06:03.182Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "DocumentModel.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\Search\\DocumentModel.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\Search\\DocumentModel.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\Search\\DocumentModel.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\Search\\DocumentModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAABJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T07:36:44.425Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "DocumentModels.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\Upload\\DocumentModels.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\Upload\\DocumentModels.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\Upload\\DocumentModels.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\Upload\\DocumentModels.cs",
+              "ViewState": "AgIAAAEAAAAAAAAAAAAjwDoAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T07:33:08.866Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "DocumentProcessor.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Upload\\DocumentProcessor.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Upload\\DocumentProcessor.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Upload\\DocumentProcessor.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Upload\\DocumentProcessor.cs",
+              "ViewState": "AgIAAKUBAAAAAAAAAAAwwEMCAAA9AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T07:25:33.825Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "EmbeddingGenerator.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Upload\\EmbeddingGenerator.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Upload\\EmbeddingGenerator.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Upload\\EmbeddingGenerator.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Upload\\EmbeddingGenerator.cs",
+              "ViewState": "AgIAAAkBAAAAAAAAAAAAABMBAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T07:25:18.861Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "DocumentUploader.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Upload\\DocumentUploader.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Upload\\DocumentUploader.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Upload\\DocumentUploader.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Upload\\DocumentUploader.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB0AAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T07:25:01.544Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "CosineSimilarity.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\CosineSimilarity.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\CosineSimilarity.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\CosineSimilarity.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\CosineSimilarity.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:34:46.454Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "SearchOptions.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\Search\\SearchOptions.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\Search\\SearchOptions.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\Search\\SearchOptions.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\Search\\SearchOptions.cs",
+              "ViewState": "AgIAABQAAAAAAAAAAAAAwCIAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:33:46.173Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Demo\\appsettings.json",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Demo\\appsettings.json",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Demo\\appsettings.json",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Demo\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-08-11T20:14:13.809Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "ReciprocalRankFusion.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\ReciprocalRankFusion.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\ReciprocalRankFusion.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\ReciprocalRankFusion.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\ReciprocalRankFusion.cs",
+              "ViewState": "AgIAABcAAAAAAAAAAADwvx0AAABAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:38:45.313Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "SearchIndex.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\SearchIndex.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\SearchIndex.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\SearchIndex.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\SearchIndex.cs",
+              "ViewState": "AgIAAH8AAAAAAAAAAAAIwLQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:42:56.332Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Demo\\Program.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Demo\\Program.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Demo\\Program.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Demo\\Program.cs",
+              "ViewState": "AgIAAA4AAAAAAAAAAAAiwCAAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T07:01:54.849Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "LexicalSearch.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\LexicalSearch.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\LexicalSearch.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\LexicalSearch.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\LexicalSearch.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:20:01.625Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "SemanticSearch.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\SemanticSearch.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\SemanticSearch.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\SemanticSearch.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\SemanticSearch.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAA9AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:38:21.721Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "SearchDemo.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Demo\\SearchDemo.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Demo\\SearchDemo.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Demo\\SearchDemo.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Demo\\SearchDemo.cs",
+              "ViewState": "AgIAADQBAAAAAAAAAAAQwD4BAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T07:06:18.278Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "TFIDFScorer.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\TFIDFScorer.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\TFIDFScorer.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Search\\TFIDFScorer.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Search\\TFIDFScorer.cs",
+              "ViewState": "AgIAAHEBAAAAAAAAAAAqwHgBAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:43:23.823Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "IEmbeddingGenerator.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Embeddings\\IEmbeddingGenerator.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Embeddings\\IEmbeddingGenerator.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Embeddings\\IEmbeddingGenerator.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Embeddings\\IEmbeddingGenerator.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:47:50.691Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "MockEmbeddingGenerator.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Embeddings\\MockEmbeddingGenerator.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Embeddings\\MockEmbeddingGenerator.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Embeddings\\MockEmbeddingGenerator.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Embeddings\\MockEmbeddingGenerator.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:49:49.949Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 34,
+              "Title": "ISearchIndex.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Interfaces\\Search\\ISearchIndex.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Interfaces\\Search\\ISearchIndex.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Interfaces\\Search\\ISearchIndex.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Interfaces\\Search\\ISearchIndex.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:24:04.895Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 35,
+              "Title": "ISearchEngine.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Interfaces\\Search\\ISearchEngine.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Interfaces\\Search\\ISearchEngine.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Interfaces\\Search\\ISearchEngine.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Interfaces\\Search\\ISearchEngine.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:23:49.242Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 33,
+              "Title": "SearchModels.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\Search\\SearchModels.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\Search\\SearchModels.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\Search\\SearchModels.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\Search\\SearchModels.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T06:22:22.019Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 36,
+              "Title": "IMemoryInterfaces.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Interfaces\\IMemoryInterfaces.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Interfaces\\IMemoryInterfaces.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Interfaces\\IMemoryInterfaces.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Interfaces\\IMemoryInterfaces.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-12T05:51:32.1Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 46,
+              "Title": "UnitTest1.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Tests\\UnitTest1.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Tests\\UnitTest1.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Tests\\UnitTest1.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Tests\\UnitTest1.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T11:09:43.866Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 44,
+              "Title": "NuGet.Build.Tasks.Pack.targets",
+              "DocumentMoniker": "C:\\Program Files\\dotnet\\sdk\\9.0.305\\Sdks\\NuGet.Build.Tasks.Pack\\build\\NuGet.Build.Tasks.Pack.targets",
+              "RelativeDocumentMoniker": "..\\..\\..\\Program Files\\dotnet\\sdk\\9.0.305\\Sdks\\NuGet.Build.Tasks.Pack\\build\\NuGet.Build.Tasks.Pack.targets",
+              "ToolTip": "C:\\Program Files\\dotnet\\sdk\\9.0.305\\Sdks\\NuGet.Build.Tasks.Pack\\build\\NuGet.Build.Tasks.Pack.targets",
+              "RelativeToolTip": "..\\..\\..\\Program Files\\dotnet\\sdk\\9.0.305\\Sdks\\NuGet.Build.Tasks.Pack\\build\\NuGet.Build.Tasks.Pack.targets",
+              "ViewState": "AgIAAM8AAAAAAAAAAAAmwOEAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003801|",
+              "WhenOpened": "2026-08-11T11:09:22.084Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 38,
+              "Title": "AttentionOptimizer.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Strategies\\AttentionOptimizer.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Strategies\\AttentionOptimizer.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Strategies\\AttentionOptimizer.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Strategies\\AttentionOptimizer.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAI8AAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T11:04:45.862Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 37,
+              "Title": "ContextCompressor.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Services\\ContextCompressor.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Services\\ContextCompressor.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Services\\ContextCompressor.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Services\\ContextCompressor.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACgAAABCAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T10:57:15.85Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 43,
+              "Title": "SecretRedactor.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Strategies\\SecretRedactor.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Strategies\\SecretRedactor.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Strategies\\SecretRedactor.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Strategies\\SecretRedactor.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAA5AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T10:54:32.487Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 40,
+              "Title": "CompressionModels.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\CompressionModels.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\CompressionModels.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\CompressionModels.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\CompressionModels.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAAAwwCcAAAA4AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T10:18:06.653Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 39,
+              "Title": "AnchorProtection.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Strategies\\AnchorProtection.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Strategies\\AnchorProtection.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Strategies\\AnchorProtection.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Strategies\\AnchorProtection.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAA5AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T10:55:28.491Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 45,
+              "Title": "README.md",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\README.md",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\README.md",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\README.md",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\README.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-08-11T11:11:04.518Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 41,
+              "Title": "TokenEstimator.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Services\\TokenEstimator.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Services\\TokenEstimator.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Services\\TokenEstimator.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Services\\TokenEstimator.cs",
+              "ViewState": "AgIAAAEAAAAAAAAAAAAEwBEAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T11:21:20.468Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 42,
+              "Title": "LLMAsJudge.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Evaluation\\LLMAsJudge.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Evaluation\\LLMAsJudge.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Evaluation\\LLMAsJudge.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Evaluation\\LLMAsJudge.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEwAAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T19:31:44.081Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 48,
+              "Title": "ProgressiveCompression.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Strategies\\ProgressiveCompression.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Strategies\\ProgressiveCompression.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Strategies\\ProgressiveCompression.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Strategies\\ProgressiveCompression.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAAAoAAAA5AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T10:55:55.536Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 47,
+              "Title": "ToolResultPruner.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Strategies\\ToolResultPruner.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Strategies\\ToolResultPruner.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Strategies\\ToolResultPruner.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Strategies\\ToolResultPruner.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAARAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T10:55:04.275Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 49,
+              "Title": "cleanup.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\cleanup.cs",
+              "RelativeDocumentMoniker": "cleanup.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\cleanup.cs",
+              "RelativeToolTip": "cleanup.cs",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T10:33:55.124Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 50,
+              "Title": "MemoryModels.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\MemoryModels.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\MemoryModels.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\MemoryModels.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\MemoryModels.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T10:18:09.807Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 51,
+              "Title": "EvaluationModels.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\EvaluationModels.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\EvaluationModels.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\EvaluationModels.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\EvaluationModels.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T10:18:08.56Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 52,
+              "Title": "AnchorModel.cs",
+              "DocumentMoniker": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\AnchorModel.cs",
+              "RelativeDocumentMoniker": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\AnchorModel.cs",
+              "ToolTip": "C:\\Ashish\\PGW\\SmartChatBot.ContextEngineering\\SmartChatBot.ContextEngineering.Core\\Core\\Models\\AnchorModel.cs",
+              "RelativeToolTip": "SmartChatBot.ContextEngineering.Core\\Core\\Models\\AnchorModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-11T10:18:01.538Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

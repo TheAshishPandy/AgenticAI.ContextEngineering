@@ -85,7 +85,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
             }
         }
 
-        public int EstimateTokens(List<ChatMessage> messages)
+        public int EstimateTokens(List<ConversationMessage> messages)
         {
             if (messages == null || messages.Count == 0) return 0;
             int total = 0;

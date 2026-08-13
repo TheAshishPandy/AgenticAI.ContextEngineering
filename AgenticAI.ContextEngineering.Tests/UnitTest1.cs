@@ -36,9 +36,9 @@ namespace SmartChatBot.ContextEngineering.Tests.Core
             var context = new CompressableContext
             {
                 ConversationId = "test-123",
-                Messages = new List<ChatMessage>
+                Messages = new List<ConversationMessage>
                 {
-                    new ChatMessage { Role = "user", Content = "Hello" }
+                    new ConversationMessage { Role = "user", Content = "Hello" }
                 }
             };
 
@@ -73,9 +73,9 @@ namespace SmartChatBot.ContextEngineering.Tests.Core
 
             var context = new CompressableContext
             {
-                Messages = new List<ChatMessage>
+                Messages = new List<ConversationMessage>
                 {
-                    new ChatMessage { Role = "user", Content = new string('a', 1000) }
+                    new ConversationMessage { Role = "user", Content = new string('a', 1000) }
                 }
             };
 

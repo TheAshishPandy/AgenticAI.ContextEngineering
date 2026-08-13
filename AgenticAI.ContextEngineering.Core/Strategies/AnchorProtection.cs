@@ -106,7 +106,7 @@ namespace AgenticAI.ContextEngineering.Core.Strategies
                 .ToList();
         }
 
-        private double CalculateImportance(ChatMessage message)
+        private double CalculateImportance(ConversationMessage message)
         {
             if (message == null || string.IsNullOrEmpty(message.Content))
                 return 0;

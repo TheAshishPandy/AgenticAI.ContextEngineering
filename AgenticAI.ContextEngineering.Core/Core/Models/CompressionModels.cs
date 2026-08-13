@@ -12,7 +12,7 @@ namespace AgenticAI.ContextEngineering.Core.Models
         public string ConversationId { get; set; } = string.Empty;
         public string UserId { get; set; } = string.Empty;
         public string SystemPrompt { get; set; } = string.Empty;
-        public List<ChatMessage> Messages { get; set; } = new();
+        public List<ConversationMessage> Messages { get; set; } = new();
         public List<ToolResult> ToolResults { get; set; } = new();
         public Dictionary<string, object> Metadata { get; set; } = new();
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
@@ -24,7 +24,7 @@ namespace AgenticAI.ContextEngineering.Core.Models
                 ConversationId = this.ConversationId,
                 UserId = this.UserId,
                 SystemPrompt = this.SystemPrompt,
-                Messages = new List<ChatMessage>(this.Messages),
+                Messages = new List<ConversationMessage>(this.Messages),
                 ToolResults = new List<ToolResult>(this.ToolResults),
                 Metadata = new Dictionary<string, object>(this.Metadata),
                 Timestamp = this.Timestamp
@@ -35,7 +35,7 @@ namespace AgenticAI.ContextEngineering.Core.Models
     /// <summary>
     /// Chat message
     /// </summary>
-    public class ChatMessage
+    public class ConversationMessage
     {
         public string Role { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;

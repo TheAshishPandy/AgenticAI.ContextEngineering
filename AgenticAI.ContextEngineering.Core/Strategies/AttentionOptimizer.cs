@@ -29,7 +29,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 return context;
 
             var messages = context.Messages.ToList();
-            var optimizedMessages = new List<ChatMessage>();
+            var optimizedMessages = new List<ConversationMessage>();
 
             // Get important anchors for placement
             var topAnchors = anchors

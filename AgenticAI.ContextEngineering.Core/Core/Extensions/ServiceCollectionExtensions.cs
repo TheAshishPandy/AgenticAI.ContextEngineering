@@ -1,58 +1,60 @@
 ﻿// Core/Extensions/ServiceCollectionExtensions.cs
-using AgenticAI.ContextEngineering.Core.Memory;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using AgenticAI.ContextEngineering.Core.Evaluation;
 using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
 using AgenticAI.ContextEngineering.Core.Services;
-using AgenticAI.ContextEngineering.Core.Strategies;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 
 namespace AgenticAI.ContextEngineering.Core.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddContextEngineering(
+        // ... existing AddContextEngineering methods ...
+
+        /// <summary>
+        /// Add AI Response Service with conversation summarization and dynamic data handling
+        /// </summary>
+        public static IServiceCollection AddAIResponseService(
             this IServiceCollection services,
-            Action<CompressionOptions>? configureOptions = null)
+            Action<AIResponseOptions>? configureOptions = null)
         {
+            if (services == null)
+                throw new ArgumentNullException(nameof(services));
+
             if (configureOptions != null)
             {
                 services.Configure(configureOptions);
             }
             else
             {
-                services.Configure<CompressionOptions>(options => { });
+                services.Configure<AIResponseOptions>(options => { });
             }
 
-            RegisterServices(services);
+            // Register AI services
+            services.AddScoped<IAIResponseService, AIResponseService>();
+
             return services;
         }
 
-        public static IServiceCollection AddContextEngineering(
+        /// <summary>
+        /// Add AI Response Service with configuration binding
+        /// </summary>
+        public static IServiceCollection AddAIResponseService(
             this IServiceCollection services,
             IConfiguration configuration,
-            string configSection = "ContextEngineering")
+            string configSection = "AIResponse")
         {
-            // ✅ This works with Microsoft.Extensions.Options.ConfigurationExtensions
-            services.Configure<CompressionOptions>(configuration.GetSection(configSection));
+            if (services == null)
+                throw new ArgumentNullException(nameof(services));
 
-            RegisterServices(services);
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+
+            services.Configure<AIResponseOptions>(configuration.GetSection(configSection));
+            services.AddScoped<IAIResponseService, AIResponseService>();
+
             return services;
-        }
-
-        private static void RegisterServices(IServiceCollection services)
-        {
-            services.AddSingleton<ITokenEstimator, TokenEstimator>();
-            services.AddScoped<IContextCompressor, ContextCompressor>();
-            services.AddScoped<ISecretRedactor, SecretRedactor>();
-            services.AddScoped<IToolResultPruner, ToolResultPruner>();
-            services.AddScoped<IAnchorProtection, AnchorProtection>();
-            services.AddScoped<IProgressiveCompression, ProgressiveCompression>();
-            services.AddScoped<ContextEngineering.Core.Memory.IAppendOnlyMemory, AppendOnlyMemory>();
-            services.AddScoped<ILLMAsJudge, LLMAsJudge>();
         }
     }
 }

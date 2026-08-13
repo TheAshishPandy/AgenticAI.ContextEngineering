@@ -22,7 +22,7 @@ namespace AgenticAI.ContextEngineering.Core.Interfaces
     {
         int EstimateTokens(string text);
         int EstimateTokens(object obj);
-        int EstimateTokens(List<ChatMessage> messages);
+        int EstimateTokens(List<ConversationMessage> messages);
         Dictionary<string, int> GetTokenDistribution(Dictionary<string, object> context);
     }
 

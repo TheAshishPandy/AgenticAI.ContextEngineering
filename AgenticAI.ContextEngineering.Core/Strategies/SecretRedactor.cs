@@ -55,7 +55,7 @@ namespace AgenticAI.ContextEngineering.Core.Strategies
                 ConversationId = context.ConversationId,
                 UserId = context.UserId,
                 SystemPrompt = RedactText(context.SystemPrompt),
-                Messages = new List<ChatMessage>(),
+                Messages = new List<ConversationMessage>(),
                 ToolResults = new List<ToolResult>(),
                 Metadata = new Dictionary<string, object>(context.Metadata),
                 Timestamp = context.Timestamp
@@ -66,7 +66,7 @@ namespace AgenticAI.ContextEngineering.Core.Strategies
             {
                 foreach (var msg in context.Messages)
                 {
-                    redacted.Messages.Add(new ChatMessage
+                    redacted.Messages.Add(new ConversationMessage
                     {
                         Role = msg.Role,
                         Content = RedactText(msg.Content),

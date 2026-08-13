@@ -35,7 +35,7 @@ namespace AgenticAI.ContextEngineering.Core.Strategies
                 ConversationId = context.ConversationId,
                 UserId = context.UserId,
                 SystemPrompt = context.SystemPrompt,
-                Messages = new List<ChatMessage>(context.Messages),
+                Messages = new List<ConversationMessage>(context.Messages),
                 ToolResults = new List<ToolResult>(),
                 Metadata = new Dictionary<string, object>(context.Metadata),
                 Timestamp = context.Timestamp

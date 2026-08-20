@@ -8,170 +8,78 @@ namespace AgenticAI.ContextEngineering.Core.Search
 {
     public static class ReciprocalRankFusion
     {
-        private const int DEFAULT_K = 60;
-
-        /// <summary>
-        /// Fuses multiple ranked result lists using RRF
-        /// </summary>
         public static List<SearchResult> FuseResults(
             List<SearchResult> lexicalResults,
             List<SearchResult> semanticResults,
             int topK = 10,
-            int k = DEFAULT_K)
+            int k = 60)
         {
-            if (lexicalResults == null || !lexicalResults.Any())
-                return semanticResults ?? new List<SearchResult>();
+            if (lexicalResults == null) lexicalResults = new List<SearchResult>();
+            if (semanticResults == null) semanticResults = new List<SearchResult>();
 
-            if (semanticResults == null || !semanticResults.Any())
-                return lexicalResults ?? new List<SearchResult>();
+            if (!lexicalResults.Any() && !semanticResults.Any())
+                return new List<SearchResult>();
 
-            // Build rank maps
-            var lexicalRankMap = BuildRankMap(lexicalResults);
-            var semanticRankMap = BuildRankMap(semanticResults);
+            if (!lexicalResults.Any())
+                return semanticResults.Take(topK).ToList();
 
-            // Get all unique IDs
-            var allDocIds = lexicalRankMap.Keys
-                .Union(semanticRankMap.Keys)
-                .ToHashSet();
+            if (!semanticResults.Any())
+                return lexicalResults.Take(topK).ToList();
 
-            // Calculate RRF scores
-            var fusedScores = new Dictionary<string, (SearchResult Result, double Score)>();
-            var documents = new Dictionary<string, SearchResult>();
+            var scoreMap = new Dictionary<string, (SearchResult Result, double Score)>();
 
-            foreach (var doc in lexicalResults)
-                documents[doc.Id] = doc;
-            foreach (var doc in semanticResults)
-                documents[doc.Id] = doc;
-
-            foreach (var docId in allDocIds)
+            // ✅ Process lexical results
+            for (int rank = 0; rank < lexicalResults.Count; rank++)
             {
-                double score = 0.0;
+                var result = lexicalResults[rank];
+                var key = GetResultKey(result);
+                var rrfScore = 1.0 / (k + rank + 1);
 
-                // Lexical contribution
-                if (lexicalRankMap.TryGetValue(docId, out var lexicalRank))
-                    score += 1.0 / (k + lexicalRank);
-
-                // Semantic contribution
-                if (semanticRankMap.TryGetValue(docId, out var semanticRank))
-                    score += 1.0 / (k + semanticRank);
-
-                if (documents.TryGetValue(docId, out var result))
+                if (scoreMap.ContainsKey(key))
                 {
-                    var fusedResult = new SearchResult
-                    {
-                        Id = result.Id,
-                        Content = result.Content,
-                        Title = result.Title,
-                        Source = result.Source,
-                        Score = score,
-                        Metadata = new Dictionary<string, object>(result.Metadata),
-                        ScoreBreakdown = new ScoreBreakdown
-                        {
-                            LexicalScore = lexicalRankMap.ContainsKey(docId) ? 1.0 / (k + lexicalRankMap[docId]) : 0,
-                            SemanticScore = semanticRankMap.ContainsKey(docId) ? 1.0 / (k + semanticRankMap[docId]) : 0,
-                            CombinedScore = score
-                        }
-                    };
-                    fusedScores[docId] = (fusedResult, score);
+                    var existing = scoreMap[key];
+                    scoreMap[key] = (existing.Result, existing.Score + rrfScore);
+                }
+                else
+                {
+                    scoreMap[key] = (result, rrfScore);
                 }
             }
 
-            return fusedScores
+            // ✅ Process semantic results
+            for (int rank = 0; rank < semanticResults.Count; rank++)
+            {
+                var result = semanticResults[rank];
+                var key = GetResultKey(result);
+                var rrfScore = 1.0 / (k + rank + 1);
+
+                if (scoreMap.ContainsKey(key))
+                {
+                    var existing = scoreMap[key];
+                    scoreMap[key] = (existing.Result, existing.Score + rrfScore);
+                }
+                else
+                {
+                    scoreMap[key] = (result, rrfScore);
+                }
+            }
+
+            // ✅ Return top K results ordered by fused score
+            return scoreMap
                 .OrderByDescending(x => x.Value.Score)
                 .Take(topK)
                 .Select(x => x.Value.Result)
                 .ToList();
         }
 
-        /// <summary>
-        /// Build rank map (1-based ranking)
-        /// </summary>
-        private static Dictionary<string, int> BuildRankMap(List<SearchResult> results)
+        private static string GetResultKey(SearchResult result)
         {
-            var rankMap = new Dictionary<string, int>();
-            for (int i = 0; i < results.Count; i++)
-            {
-                rankMap[results[i].Id] = i + 1;
-            }
-            return rankMap;
-        }
+            // Use content hash as key to deduplicate
+            if (!string.IsNullOrEmpty(result.Id))
+                return result.Id;
 
-        /// <summary>
-        /// Fuse with weighted scores (alternative to RRF)
-        /// </summary>
-        public static List<SearchResult> FuseWithWeights(
-            List<SearchResult> lexicalResults,
-            List<SearchResult> semanticResults,
-            double lexicalWeight = 0.4,
-            double semanticWeight = 0.6,
-            int topK = 10)
-        {
-            var combined = new Dictionary<string, SearchResult>();
-
-            // Normalize scores
-            NormalizeScores(lexicalResults);
-            NormalizeScores(semanticResults);
-
-            // Add lexical results
-            foreach (var result in lexicalResults)
-            {
-                if (combined.TryGetValue(result.Id, out var existing))
-                {
-                    existing.Score += result.Score * lexicalWeight;
-                }
-                else
-                {
-                    var newResult = CloneResult(result);
-                    newResult.Score = result.Score * lexicalWeight;
-                    combined[result.Id] = newResult;
-                }
-            }
-
-            // Add semantic results
-            foreach (var result in semanticResults)
-            {
-                if (combined.TryGetValue(result.Id, out var existing))
-                {
-                    existing.Score += result.Score * semanticWeight;
-                }
-                else
-                {
-                    var newResult = CloneResult(result);
-                    newResult.Score = result.Score * semanticWeight;
-                    combined[result.Id] = newResult;
-                }
-            }
-
-            return combined.Values
-                .OrderByDescending(r => r.Score)
-                .Take(topK)
-                .ToList();
-        }
-
-        private static void NormalizeScores(List<SearchResult> results)
-        {
-            if (!results.Any()) return;
-
-            var maxScore = results.Max(r => r.Score);
-            if (maxScore > 0)
-            {
-                foreach (var result in results)
-                {
-                    result.Score /= maxScore;
-                }
-            }
-        }
-
-        private static SearchResult CloneResult(SearchResult original)
-        {
-            return new SearchResult
-            {
-                Id = original.Id,
-                Content = original.Content,
-                Title = original.Title,
-                Source = original.Source,
-                Metadata = new Dictionary<string, object>(original.Metadata)
-            };
+            // Fallback to content hash
+            return result.Content?.GetHashCode().ToString() ?? Guid.NewGuid().ToString();
         }
     }
 }

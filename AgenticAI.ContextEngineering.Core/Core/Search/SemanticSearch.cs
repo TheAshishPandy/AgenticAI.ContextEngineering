@@ -1,33 +1,36 @@
-﻿// Core/Search/SemanticSearch.cs
+﻿// Core/Search/SemanticSearch.cs (Updated with Qdrant)
+using AgenticAI.ContextEngineering.Core.Interfaces;
+using AgenticAI.ContextEngineering.Core.Models;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using AgenticAI.ContextEngineering.Core.Models;
 
 namespace AgenticAI.ContextEngineering.Core.Search
 {
     public class SemanticSearch
     {
         private readonly SearchIndex _searchIndex;
+        private readonly IQdrantClient? _qdrantClient;
         private readonly ILogger<SemanticSearch> _logger;
-        private readonly SearchOptions _options;  // ✅ Direct injection
+        private readonly SearchOptions _options;
+        private readonly bool _useQdrant;
 
         public SemanticSearch(
             SearchIndex searchIndex,
+            IQdrantClient? qdrantClient,
             ILogger<SemanticSearch> logger,
-            SearchOptions options)  // ✅ Direct SearchOptions
+            SearchOptions options)
         {
             _searchIndex = searchIndex;
+            _qdrantClient = qdrantClient;
             _logger = logger;
             _options = options;
+            _useQdrant = qdrantClient != null;
         }
 
-        /// <summary>
-        /// Perform semantic (vector) search
-        /// </summary>
         public async Task<SearchResponse> SearchAsync(
             SearchRequest request,
             float[] queryVector,
@@ -40,7 +43,6 @@ namespace AgenticAI.ContextEngineering.Core.Search
             {
                 if (queryVector == null || queryVector.Length == 0)
                 {
-                    _logger.LogWarning("Query vector is empty");
                     return new SearchResponse
                     {
                         Results = results,
@@ -50,64 +52,71 @@ namespace AgenticAI.ContextEngineering.Core.Search
                     };
                 }
 
-                // Get all documents with embeddings
-                var documents = _searchIndex.GetAllDocuments();
-                var documentVectors = _searchIndex.GetAllEmbeddings();
-
-                if (!documents.Any() || !documentVectors.Any())
+                // ✅ If using Qdrant, search via Qdrant
+                if (_useQdrant && _qdrantClient != null)
                 {
-                    return new SearchResponse
-                    {
-                        Results = results,
-                        ProcessingTime = stopwatch.Elapsed,
-                        SearchMethod = "Semantic (Vector)",
-                        Metadata = new Dictionary<string, object> { ["documents_found"] = 0 }
-                    };
+                    _logger.LogDebug("Searching via Qdrant...");
+
+                    var qdrantResults = await _qdrantClient.SearchAsync(
+                        queryVector,
+                        request.TopResults,
+                        (float)request.MinimumRelevanceScore,
+                        request.Filters,
+                        cancellationToken);
+
+                    results = qdrantResults;
+
+                    _logger.LogDebug($"Qdrant returned {results.Count} results");
                 }
-
-                // Calculate cosine similarities
-                var similarities = new List<(Document Doc, double Score)>();
-
-                for (int i = 0; i < documents.Count; i++)
+                else
                 {
-                    if (i >= documentVectors.Count) break;
+                    // ✅ In-memory search (fallback)
+                    _logger.LogDebug("Searching in-memory...");
 
-                    var score = CosineSimilarity.Calculate(queryVector, documentVectors[i]);
+                    var documents = _searchIndex.GetAllDocuments();
+                    var documentVectors = _searchIndex.GetAllEmbeddings();
 
-                    if (score > request.MinimumRelevanceScore || request.MinimumRelevanceScore == 0)
+                    if (!documents.Any() || !documentVectors.Any())
                     {
-                        similarities.Add((documents[i], score));
-                    }
-                }
-
-                // Sort by score descending
-                var topResults = similarities
-                    .OrderByDescending(s => s.Score)
-                    .Take(request.TopResults)
-                    .ToList();
-
-                foreach (var (doc, score) in topResults)
-                {
-                    var searchResult = new SearchResult
-                    {
-                        Id = doc.Id,
-                        Content = doc.Content,
-                        Title = doc.Title,
-                        Source = doc.Source,
-                        Score = score,
-                        Metadata = doc.Metadata
-                    };
-
-                    if (request.IncludeScoreBreakdown)
-                    {
-                        searchResult.ScoreBreakdown = new ScoreBreakdown
+                        return new SearchResponse
                         {
-                            SemanticScore = score,
-                            CombinedScore = score
+                            Results = results,
+                            ProcessingTime = stopwatch.Elapsed,
+                            SearchMethod = "Semantic (In-Memory)",
+                            Metadata = new Dictionary<string, object> { ["documents_found"] = 0 }
                         };
                     }
 
-                    results.Add(searchResult);
+                    var docList = documents.ToList();
+                    var vectorList = documentVectors.ToList();
+                    var similarities = new List<(Document Doc, double Score)>();
+
+                    for (int i = 0; i < docList.Count && i < vectorList.Count; i++)
+                    {
+                        var score = CosineSimilarity.Calculate(queryVector, vectorList[i]);
+                        if (score > request.MinimumRelevanceScore || request.MinimumRelevanceScore == 0)
+                        {
+                            similarities.Add((docList[i], score));
+                        }
+                    }
+
+                    var topResults = similarities
+                        .OrderByDescending(s => s.Score)
+                        .Take(request.TopResults)
+                        .ToList();
+
+                    foreach (var (doc, score) in topResults)
+                    {
+                        results.Add(new SearchResult
+                        {
+                            Id = doc.Id,
+                            Content = doc.Content,
+                            Title = doc.Title,
+                            Source = doc.Source,
+                            Score = score,
+                            Metadata = doc.Metadata
+                        });
+                    }
                 }
 
                 stopwatch.Stop();
@@ -116,12 +125,13 @@ namespace AgenticAI.ContextEngineering.Core.Search
                 {
                     Results = results,
                     TotalCount = results.Count,
-                    SearchMethod = "Semantic (Vector)",
+                    SearchMethod = _useQdrant ? "Semantic (Qdrant)" : "Semantic (In-Memory)",
                     ProcessingTime = stopwatch.Elapsed,
                     Metadata = new Dictionary<string, object>
                     {
-                        ["documents_scored"] = documents.Count,
-                        ["embedding_dimensions"] = queryVector.Length
+                        ["results_count"] = results.Count,
+                        ["search_method"] = _useQdrant ? "Qdrant" : "In-Memory",
+                        ["query_vector_dimensions"] = queryVector.Length
                     }
                 };
             }
@@ -134,64 +144,9 @@ namespace AgenticAI.ContextEngineering.Core.Search
                     Results = new List<SearchResult>(),
                     ProcessingTime = stopwatch.Elapsed,
                     SearchMethod = "Semantic (Vector)",
-                    Metadata = new Dictionary<string, object>
-                    {
-                        ["error"] = ex.Message
-                    }
+                    Metadata = new Dictionary<string, object> { ["error"] = ex.Message }
                 };
             }
-        }
-
-        /// <summary>
-        /// Perform search with multiple query vectors (for MMR/query expansion)
-        /// </summary>
-        public async Task<SearchResponse> MultiVectorSearchAsync(
-            SearchRequest request,
-            List<float[]> queryVectors,
-            CancellationToken cancellationToken = default)
-        {
-            if (queryVectors == null || !queryVectors.Any())
-                return await SearchAsync(request, Array.Empty<float>(), cancellationToken);
-
-            var allResults = new List<SearchResult>();
-            var processedIds = new HashSet<string>();
-
-            foreach (var vector in queryVectors)
-            {
-                var response = await SearchAsync(request, vector, cancellationToken);
-                foreach (var result in response.Results)
-                {
-                    if (!processedIds.Contains(result.Id))
-                    {
-                        allResults.Add(result);
-                        processedIds.Add(result.Id);
-                    }
-                }
-            }
-
-            // Aggregate and re-rank
-            var groupedResults = allResults
-                .GroupBy(r => r.Id)
-                .Select(g => new SearchResult
-                {
-                    Id = g.Key,
-                    Content = g.First().Content,
-                    Title = g.First().Title,
-                    Source = g.First().Source,
-                    Score = g.Average(r => r.Score),
-                    Metadata = g.First().Metadata
-                })
-                .OrderByDescending(r => r.Score)
-                .Take(request.TopResults)
-                .ToList();
-
-            return new SearchResponse
-            {
-                Results = groupedResults,
-                TotalCount = groupedResults.Count,
-                SearchMethod = "Semantic (Multi-Vector)",
-                ProcessingTime = TimeSpan.Zero
-            };
         }
     }
 }

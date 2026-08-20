@@ -1,12 +1,9 @@
-﻿// SmartChatBot.ContextEngineering.Demo/SearchDemo.cs
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using AgenticAI.ContextEngineering.Core.Embeddings;
-using AgenticAI.ContextEngineering.Core.Extensions;
+﻿// SearchDemo.cs
 using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
 using AgenticAI.ContextEngineering.Core.Search;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +38,7 @@ namespace SmartChatBot.ContextEngineering.Demo
                 var lexicalSearch = _serviceProvider.GetRequiredService<LexicalSearch>();
                 var semanticSearch = _serviceProvider.GetRequiredService<SemanticSearch>();
                 var embeddingGen = _serviceProvider.GetRequiredService<IEmbeddingGenerator>();
+                var qdrantClient = _serviceProvider.GetService<IQdrantClient>();  // ✅ Get Qdrant client
 
                 // ============================================================
                 // STEP 1: Index Sample Documents
@@ -51,8 +49,19 @@ namespace SmartChatBot.ContextEngineering.Demo
 
                 var documents = CreateSampleDocuments();
                 searchIndex.IndexDocuments(documents);
-                Console.WriteLine($"✅ Indexed {documents.Count} documents");
+                Console.WriteLine($"✅ Indexed {documents.Count} documents to memory");
                 Console.WriteLine();
+
+                // ✅ STEP 1.5: Index documents to Qdrant (for vector search)
+                if (qdrantClient != null)
+                {
+                    await IndexDocumentsToQdrantAsync(qdrantClient, embeddingGen, documents);
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ Qdrant client not available, using in-memory search only");
+                    Console.WriteLine();
+                }
 
                 // Display indexed documents
                 Console.WriteLine("📚 Indexed Documents:");
@@ -78,7 +87,7 @@ namespace SmartChatBot.ContextEngineering.Demo
                 // ============================================================
                 // STEP 4: Hybrid Search (RRF)
                 // ============================================================
-                await RunHybridSearchDemoAsync(hybridSearch);
+                await RunHybridSearchDemoAsync(hybridSearch, embeddingGen);
 
                 // ============================================================
                 // STEP 5: Search Comparison
@@ -86,9 +95,9 @@ namespace SmartChatBot.ContextEngineering.Demo
                 await RunSearchComparisonDemoAsync(hybridSearch, lexicalSearch, semanticSearch, embeddingGen);
 
                 // ============================================================
-                // STEP 6: Advanced Search Features
+                // STEP 6: Search with Filters
                 // ============================================================
-                await RunAdvancedSearchDemoAsync(hybridSearch);
+                await RunFilteredSearchDemoAsync(hybridSearch);
 
                 Console.WriteLine();
                 Console.WriteLine("╔═══════════════════════════════════════════════════════════════════════════════╗");
@@ -107,10 +116,81 @@ namespace SmartChatBot.ContextEngineering.Demo
                 Console.WriteLine($"❌ Error: {ex.Message}");
                 Console.WriteLine($"   StackTrace: {ex.StackTrace}");
             }
+        }
 
+        // ============================================================
+        // INDEX TO QDRANT
+        // ============================================================
+
+        /// <summary>
+        /// Index documents to Qdrant for vector search
+        /// </summary>
+        private async Task IndexDocumentsToQdrantAsync(
+            IQdrantClient qdrantClient,
+            IEmbeddingGenerator embeddingGen,
+            List<Document> documents)
+        {
+            Console.WriteLine("📤 Indexing documents to Qdrant...");
+            Console.WriteLine(new string('─', 80));
             Console.WriteLine();
-            Console.WriteLine("Press any key to exit...");
-            Console.ReadKey();
+
+            if (qdrantClient == null)
+            {
+                Console.WriteLine("⚠️ Qdrant client not available, skipping vector indexing");
+                Console.WriteLine();
+                return;
+            }
+
+            try
+            {
+                // Check if collection exists
+                var collectionExists = await qdrantClient.CollectionExistsAsync();
+                if (!collectionExists)
+                {
+                    Console.WriteLine("📝 Creating Qdrant collection...");
+                    await qdrantClient.CreateCollectionAsync(1536);
+                    Console.WriteLine("✅ Qdrant collection created");
+                }
+
+                var indexedCount = 0;
+                foreach (var doc in documents)
+                {
+                    try
+                    {
+                        // Generate embedding for the document
+                        var embedding = await embeddingGen.GenerateEmbeddingAsync(doc.Content);
+
+                        // Index to Qdrant
+                        await qdrantClient.IndexDocumentAsync(
+                            doc.Id,
+                            embedding,
+                            doc.Content,
+                            doc.Title,
+                            doc.Source,
+                            doc.Metadata);
+
+                        indexedCount++;
+                        Console.WriteLine($"   ✅ Indexed: {doc.Title}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"   ❌ Failed to index {doc.Title}: {ex.Message}");
+                    }
+                }
+
+                Console.WriteLine();
+                Console.WriteLine($"✅ Successfully indexed {indexedCount} documents to Qdrant");
+
+                // Verify
+                var size = await qdrantClient.GetCollectionSizeAsync();
+                Console.WriteLine($"📊 Qdrant collection now has {size} documents");
+                Console.WriteLine();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Qdrant indexing error: {ex.Message}");
+                Console.WriteLine();
+            }
         }
 
         // ============================================================
@@ -267,7 +347,7 @@ namespace SmartChatBot.ContextEngineering.Demo
                 {
                     Query = query,
                     TopResults = 5,
-                    SearchType = SearchType.Lexical,
+                    MinimumRelevanceScore = 0,
                     IncludeScoreBreakdown = true
                 };
 
@@ -304,12 +384,14 @@ namespace SmartChatBot.ContextEngineering.Demo
                 Console.WriteLine();
 
                 var queryVector = await embeddingGen.GenerateEmbeddingAsync(query);
+                Console.WriteLine($"   ✅ Query vector generated: {queryVector.Length} dimensions");
+                Console.WriteLine();
 
                 var request = new SearchRequest
                 {
                     Query = query,
                     TopResults = 5,
-                    SearchType = SearchType.Semantic,
+                    MinimumRelevanceScore = 0,
                     IncludeScoreBreakdown = true
                 };
 
@@ -324,7 +406,9 @@ namespace SmartChatBot.ContextEngineering.Demo
         // HYBRID SEARCH DEMO
         // ============================================================
 
-        private async Task RunHybridSearchDemoAsync(HybridSearchEngine hybridSearch)
+        private async Task RunHybridSearchDemoAsync(
+            HybridSearchEngine hybridSearch,
+            IEmbeddingGenerator embeddingGen)
         {
             Console.WriteLine("🔍 3. HYBRID SEARCH (RRF)");
             Console.WriteLine(new string('─', 80));
@@ -342,12 +426,15 @@ namespace SmartChatBot.ContextEngineering.Demo
                 Console.WriteLine($"📝 Query: \"{query}\"");
                 Console.WriteLine();
 
+                var queryVector = await embeddingGen.GenerateEmbeddingAsync(query);
+
                 var request = new SearchRequest
                 {
                     Query = query,
                     TopResults = 5,
-                    SearchType = SearchType.Hybrid,
-                    IncludeScoreBreakdown = true
+                    MinimumRelevanceScore = 0,
+                    IncludeScoreBreakdown = true,
+                    QueryVector = queryVector
                 };
 
                 var response = await hybridSearch.HybridSearchAsync(request);
@@ -377,7 +464,7 @@ namespace SmartChatBot.ContextEngineering.Demo
 
             // Lexical Search
             Console.WriteLine("   A. Lexical Search (BM25):");
-            var lexicalRequest = new SearchRequest { Query = query, TopResults = 3 };
+            var lexicalRequest = new SearchRequest { Query = query, TopResults = 3, MinimumRelevanceScore = 0 };
             var lexicalResponse = await lexicalSearch.SearchAsync(lexicalRequest);
             Console.WriteLine($"      Results: {lexicalResponse.TotalCount}");
             foreach (var result in lexicalResponse.Results)
@@ -389,7 +476,7 @@ namespace SmartChatBot.ContextEngineering.Demo
             // Semantic Search
             Console.WriteLine("   B. Semantic Search (Vector):");
             var queryVector = await embeddingGen.GenerateEmbeddingAsync(query);
-            var semanticRequest = new SearchRequest { Query = query, TopResults = 3 };
+            var semanticRequest = new SearchRequest { Query = query, TopResults = 3, MinimumRelevanceScore = 0 };
             var semanticResponse = await semanticSearch.SearchAsync(semanticRequest, queryVector);
             Console.WriteLine($"      Results: {semanticResponse.TotalCount}");
             foreach (var result in semanticResponse.Results)
@@ -400,7 +487,13 @@ namespace SmartChatBot.ContextEngineering.Demo
 
             // Hybrid Search
             Console.WriteLine("   C. Hybrid Search (RRF):");
-            var hybridRequest = new SearchRequest { Query = query, TopResults = 3 };
+            var hybridRequest = new SearchRequest
+            {
+                Query = query,
+                TopResults = 3,
+                MinimumRelevanceScore = 0,
+                QueryVector = queryVector
+            };
             var hybridResponse = await hybridSearch.HybridSearchAsync(hybridRequest);
             Console.WriteLine($"      Results: {hybridResponse.TotalCount}");
             foreach (var result in hybridResponse.Results)
@@ -422,48 +515,66 @@ namespace SmartChatBot.ContextEngineering.Demo
         }
 
         // ============================================================
-        // ADVANCED SEARCH DEMO
+        // FILTERED SEARCH DEMO
         // ============================================================
 
-        private async Task RunAdvancedSearchDemoAsync(HybridSearchEngine hybridSearch)
+        private async Task RunFilteredSearchDemoAsync(HybridSearchEngine hybridSearch)
         {
-            Console.WriteLine("🔍 5. ADVANCED SEARCH FEATURES");
+            Console.WriteLine("🔍 5. FILTERED SEARCH");
             Console.WriteLine(new string('─', 80));
             Console.WriteLine();
 
-            // Weighted Hybrid Search
-            Console.WriteLine("   A. Weighted Hybrid Search:");
-            var query = "banking and account information";
-            var request = new SearchRequest { Query = query, TopResults = 5 };
+            var query = "account information";
+            Console.WriteLine($"📝 Query: \"{query}\"");
+            Console.WriteLine();
 
-            var weightedResponse = await hybridSearch.HybridSearchWithWeightsAsync(
-                request,
-                lexicalWeight: 0.3,
-                semanticWeight: 0.7);
+            // Search with category filter
+            Console.WriteLine("   A. Filter by Category 'banking':");
+            var request = new SearchRequest
+            {
+                Query = query,
+                TopResults = 5,
+                MinimumRelevanceScore = 0,
+                Filters = new Dictionary<string, object>
+                {
+                    ["category"] = "banking"
+                }
+            };
 
-            Console.WriteLine($"      Query: \"{query}\"");
-            Console.WriteLine($"      Results: {weightedResponse.TotalCount}");
-            foreach (var result in weightedResponse.Results)
+            var response = await hybridSearch.HybridSearchAsync(request);
+            Console.WriteLine($"      Results: {response.TotalCount}");
+            foreach (var result in response.Results)
             {
                 Console.WriteLine($"      - {result.Title} (Score: {result.Score:F4})");
+                if (result.Metadata != null && result.Metadata.TryGetValue("category", out var category))
+                {
+                    Console.WriteLine($"        Category: {category}");
+                }
             }
             Console.WriteLine();
 
-            // Performance Metrics
-            Console.WriteLine("   B. Performance Metrics:");
-            var perfRequest = new SearchRequest { Query = "account", TopResults = 10 };
-            var perfResponse = await hybridSearch.HybridSearchAsync(perfRequest);
-
-            Console.WriteLine($"      Search Method: {perfResponse.SearchMethod}");
-            Console.WriteLine($"      Processing Time: {perfResponse.ProcessingTime.TotalMilliseconds:F2}ms");
-            if (perfResponse.Metadata != null)
+            // Search with priority filter
+            Console.WriteLine("   B. Filter by Priority 'high':");
+            var priorityRequest = new SearchRequest
             {
-                if (perfResponse.Metadata.TryGetValue("lexical_results", out var lexicalCount))
-                    Console.WriteLine($"      Lexical Results: {lexicalCount}");
-                if (perfResponse.Metadata.TryGetValue("semantic_results", out var semanticCount))
-                    Console.WriteLine($"      Semantic Results: {semanticCount}");
-                if (perfResponse.Metadata.TryGetValue("fused_results", out var fusedCount))
-                    Console.WriteLine($"      Fused Results: {fusedCount}");
+                Query = "account",
+                TopResults = 5,
+                MinimumRelevanceScore = 0,
+                Filters = new Dictionary<string, object>
+                {
+                    ["priority"] = "high"
+                }
+            };
+
+            var priorityResponse = await hybridSearch.HybridSearchAsync(priorityRequest);
+            Console.WriteLine($"      Results: {priorityResponse.TotalCount}");
+            foreach (var result in priorityResponse.Results)
+            {
+                Console.WriteLine($"      - {result.Title} (Score: {result.Score:F4})");
+                if (result.Metadata != null && result.Metadata.TryGetValue("priority", out var priority))
+                {
+                    Console.WriteLine($"        Priority: {priority}");
+                }
             }
             Console.WriteLine();
         }
@@ -478,6 +589,13 @@ namespace SmartChatBot.ContextEngineering.Demo
             Console.WriteLine($"   Total: {response.TotalCount}, Time: {response.ProcessingTime.TotalMilliseconds:F2}ms");
             Console.WriteLine();
 
+            if (!response.Results.Any())
+            {
+                Console.WriteLine("   ⚠️ No results found.");
+                Console.WriteLine();
+                return;
+            }
+
             foreach (var result in response.Results)
             {
                 Console.WriteLine($"   [{result.Id}] {result.Title}");
@@ -485,10 +603,13 @@ namespace SmartChatBot.ContextEngineering.Demo
 
                 if (result.ScoreBreakdown != null)
                 {
-                    Console.WriteLine($"   └─ Lexical: {result.ScoreBreakdown.LexicalScore:F4}, Semantic: {result.ScoreBreakdown.SemanticScore:F4}");
+                    var lexicalScore = result.ScoreBreakdown.LexicalScore;
+                    var semanticScore = result.ScoreBreakdown.SemanticScore;
+                    Console.WriteLine($"   └─ Lexical: {lexicalScore:F4}, Semantic: {semanticScore:F4}");
                 }
 
-                Console.WriteLine($"   └─ Preview: {(result.Content.Length > 80 ? result.Content[..80] + "..." : result.Content)}");
+                var preview = result.Content?.Length > 80 ? result.Content[..80] + "..." : result.Content;
+                Console.WriteLine($"   └─ Preview: {preview}");
                 Console.WriteLine();
             }
         }

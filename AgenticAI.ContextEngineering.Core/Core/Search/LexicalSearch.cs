@@ -19,7 +19,7 @@ namespace AgenticAI.ContextEngineering.Core.Search
         public LexicalSearch(
             SearchIndex searchIndex,
             ILogger<LexicalSearch> logger,
-            SearchOptions options)  // ✅ Direct SearchOptions
+            SearchOptions options) 
         {
             _searchIndex = searchIndex;
             _logger = logger;

@@ -1,16 +1,17 @@
-﻿// Core/Services/AIResponseService.cs (Using new OpenAI SDK)
+﻿// Core/Services/AIResponseService.cs
 using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using OpenAI;
 using OpenAI.Chat;
 using System;
-using System.ClientModel;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,11 +22,13 @@ namespace AgenticAI.ContextEngineering.Core.Services
     {
         private readonly IConfiguration _config;
         private readonly ILogger<AIResponseService> _logger;
-        private readonly ChatClient _chatClient;
         private readonly AIResponseOptions _options;
         private static readonly Regex UrlRegex = new Regex(
             @"https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly HttpClient _httpClient;
+        private readonly string _baseUrl;
+        private readonly string _apiKey;
 
         public AIResponseService(
             IConfiguration configuration,
@@ -39,15 +42,21 @@ namespace AgenticAI.ContextEngineering.Core.Services
             var endpoint = _config["AzureOpenAIEndpoint"] ?? throw new InvalidOperationException("AzureOpenAIEndpoint not configured");
             var key = _config["AzureOpenAIKey"] ?? throw new InvalidOperationException("AzureOpenAIKey not configured");
             var deploymentName = _config["AzureOpenAIDeploymentName"] ?? throw new InvalidOperationException("AzureOpenAIDeploymentName not configured");
+            var apiVersion = _options.ApiVersion ?? "2024-02-15-preview";
 
-            // Create the ChatClient
-            _chatClient = new ChatClient(
-                model: deploymentName,
-                credential: new ApiKeyCredential(key),
-                options: new OpenAIClientOptions
-                {
-                    Endpoint = new Uri(endpoint)
-                });
+            _logger.LogInformation($"Initializing AIResponseService with Endpoint: {endpoint}, Deployment: {deploymentName}, API Version: {apiVersion}");
+
+            // Build the exact URL that works in Postman
+            var baseUrl = endpoint.TrimEnd('/');
+            _baseUrl = $"{baseUrl}/openai/deployments/{deploymentName}/chat/completions?api-version={apiVersion}";
+            _apiKey = key;
+
+            _logger.LogInformation($"Using URL: {_baseUrl}");
+
+            // Create HttpClient with headers
+            _httpClient = new HttpClient();
+            _httpClient.DefaultRequestHeaders.Add("api-key", _apiKey);
+            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
         }
 
         public async Task<AIResponseResult> GenerateResponseAsync(
@@ -58,10 +67,13 @@ namespace AgenticAI.ContextEngineering.Core.Services
 
             try
             {
+                _logger.LogDebug("Generating AI response for conversation {ConversationId}, Division: {Division}",
+                    request.ConversationId, request.Division);
+
                 // Build module context with dynamic data priority
                 var moduleContext = BuildModuleContext(request.ModuleData);
 
-                // Check for dynamic data in latest user query (Rule 7)
+                // Check for dynamic data in latest user query
                 var dynamicDataContext = ExtractDynamicDataFromQuery(
                     request.UserQuery,
                     request.ModuleData,
@@ -75,48 +87,82 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     request.ConversationSummary,
                     request.ConversationHistory);
 
-                // Create completion options
-                var completionOptions = new ChatCompletionOptions
+                // Build request body
+                var requestBody = new
                 {
-                    Temperature = request.Temperature > 0 ? request.Temperature : _options.DefaultTemperature,
-                    MaxOutputTokenCount = request.MaxTokens > 0 ? request.MaxTokens : _options.DefaultMaxTokens
+                    messages = messages.Select(m => new
+                    {
+                        role = GetRoleName(m),
+                        content = GetMessageContent(m)
+                    }).ToList(),
+                    max_tokens = request.MaxTokens > 0 ? request.MaxTokens : _options.DefaultMaxTokens,
+                    temperature = request.Temperature > 0 ? request.Temperature : _options.DefaultTemperature
                 };
 
-                // Get response from OpenAI
-                var response = await _chatClient.CompleteChatAsync(
-                    messages,
-                    completionOptions,
-                    cancellationToken);
+                var json = JsonSerializer.Serialize(requestBody, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var rawResponse = response.Value.Content[0].Text.Trim();
+                // Log the request for debugging
+                _logger.LogDebug($"Calling Azure OpenAI at: {_baseUrl}");
 
-                // Remove URLs from response if enabled (Rule 6)
+                // Send request
+                var response = await _httpClient.PostAsync(_baseUrl, content, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError($"HTTP {response.StatusCode}: {responseContent}");
+                    throw new Exception($"Azure OpenAI API error: {response.StatusCode} - {responseContent}");
+                }
+
+                // ✅ Parse response with correct model
+                var result = JsonSerializer.Deserialize<OpenAIResponse>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (result == null || result.Choices == null || !result.Choices.Any())
+                {
+                    _logger.LogError("No choices returned from OpenAI");
+                    throw new Exception("No response from OpenAI");
+                }
+
+                var rawResponse = result.Choices.FirstOrDefault()?.Message?.Content ?? string.Empty;
+
+                // Remove URLs from response if enabled
                 var cleanedResponse = request.RemoveUrlsFromResponse
                     ? RemoveUrlsFromResponse(rawResponse)
                     : rawResponse;
 
-                var result = new AIResponseResult
+                var tokenDetails = new TokenDetails
+                {
+                    TotalTokens = result.Usage?.TotalTokens ?? 0,
+                    PromptTokens = result.Usage?.PromptTokens ?? 0,
+                    CompletionTokens = result.Usage?.CompletionTokens ?? 0
+                };
+
+                var aiResult = new AIResponseResult
                 {
                     Response = cleanedResponse,
                     OriginalResponse = rawResponse,
                     ConversationSummary = request.ConversationSummary,
-                    TokenCount = response.Value.Usage.TotalTokenCount,
+                    TokenCount = result.Usage?.TotalTokens ?? 0,
+                    PromptTokens = result.Usage?.PromptTokens ?? 0,
+                    CompletionTokens = result.Usage?.CompletionTokens ?? 0,
+                    TokenDetails = tokenDetails,
                     UsedSummary = !string.IsNullOrWhiteSpace(request.ConversationSummary),
                     HadUrlsRemoved = request.RemoveUrlsFromResponse && rawResponse != cleanedResponse,
                     DynamicDataUsed = dynamicDataContext
                 };
 
                 _logger.LogInformation(
-                    "Generated AI response for conversation {ConversationId}, " +
-                    "used {TokenCount} tokens, summary: {UsedSummary}, " +
-                    "dynamic data: {HasDynamicData}, URLs removed: {UrlsRemoved}",
-                    request.ConversationId,
-                    result.TokenCount,
-                    result.UsedSummary,
-                    !string.IsNullOrEmpty(dynamicDataContext),
-                    result.HadUrlsRemoved);
+                    "Generated AI response for conversation {ConversationId}, TotalTokens: {TotalTokens}",
+                    request.ConversationId, aiResult.TokenCount);
 
-                return result;
+                return aiResult;
             }
             catch (Exception ex)
             {
@@ -124,6 +170,24 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     request.ConversationId);
                 throw;
             }
+        }
+
+        private string GetRoleName(ChatMessage message)
+        {
+            return message switch
+            {
+                SystemChatMessage => "system",
+                UserChatMessage => "user",
+                AssistantChatMessage => "assistant",
+                _ => "user"
+            };
+        }
+
+        private string GetMessageContent(ChatMessage message)
+        {
+            // Get the content from the message
+            var content = message.Content.FirstOrDefault();
+            return content?.Text ?? string.Empty;
         }
 
         private void ValidateRequest(AIResponseRequest request)
@@ -163,6 +227,8 @@ namespace AgenticAI.ContextEngineering.Core.Services
             sb.AppendLine("DYNAMIC DATA FROM LATEST QUERY:");
 
             var foundData = false;
+
+            dynamicKeywords ??= new List<string>();
 
             foreach (var keyword in dynamicKeywords)
             {
@@ -226,7 +292,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 messages.Add(new UserChatMessage($"CURRENT CUSTOMER DATA:\n{moduleContext}"));
             }
 
-            // Dynamic data from latest query - HIGHEST PRIORITY (Rule 7)
+            // Dynamic data from latest query - HIGHEST PRIORITY
             if (!string.IsNullOrWhiteSpace(dynamicDataContext) && request.PrioritizeDynamicData)
             {
                 messages.Add(new UserChatMessage(
@@ -245,7 +311,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
             var recentMessages = GetRecentMessages(conversationHistory);
             foreach (var msg in recentMessages)
             {
-                if (msg.Content.Equals("User", StringComparison.OrdinalIgnoreCase))
+                if (msg.Role.Equals("User", StringComparison.OrdinalIgnoreCase))
                 {
                     messages.Add(new UserChatMessage(msg.Content));
                 }
@@ -298,6 +364,52 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 .Take(takeCount)
                 .OrderBy(x => x.Timestamp)
                 .ToList();
+        }
+
+        // ✅ Fixed Response models with proper JSON property names
+        private class OpenAIResponse
+        {
+            [JsonPropertyName("choices")]
+            public List<Choice> Choices { get; set; } = new();
+
+            [JsonPropertyName("usage")]
+            public Usage Usage { get; set; } = new();
+        }
+
+        private class Choice
+        {
+            [JsonPropertyName("message")]
+            public Message Message { get; set; } = new();
+
+            [JsonPropertyName("finish_reason")]
+            public string FinishReason { get; set; } = string.Empty;
+
+            [JsonPropertyName("index")]
+            public int Index { get; set; }
+        }
+
+        private class Message
+        {
+            [JsonPropertyName("content")]
+            public string Content { get; set; } = string.Empty;
+
+            [JsonPropertyName("role")]
+            public string Role { get; set; } = string.Empty;
+
+            [JsonPropertyName("refusal")]
+            public string Refusal { get; set; } = string.Empty;
+        }
+
+        private class Usage
+        {
+            [JsonPropertyName("total_tokens")]
+            public int TotalTokens { get; set; }
+
+            [JsonPropertyName("prompt_tokens")]
+            public int PromptTokens { get; set; }
+
+            [JsonPropertyName("completion_tokens")]
+            public int CompletionTokens { get; set; }
         }
     }
 }

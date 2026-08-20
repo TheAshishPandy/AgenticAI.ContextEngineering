@@ -5,19 +5,16 @@ namespace AgenticAI.ContextEngineering.Core.Models
 {
     public class AIResponseOptions
     {
+        public string AzureOpenAIEndpoint { get; set; } = string.Empty;
+        public string AzureOpenAIKey { get; set; } = string.Empty;
+        public string AzureOpenAIDeploymentName { get; set; } = string.Empty;
+        public string ApiVersion { get; set; } = "2024-02-15-preview";
         public float DefaultTemperature { get; set; } = 0.2f;
         public int DefaultMaxTokens { get; set; } = 500;
         public int SummaryThreshold { get; set; } = 15;
-        public int MaxHistoryMessages { get; set; } = 10;
-        public int SummaryMaxTokens { get; set; } = 200;
-        public float SummaryTemperature { get; set; } = 0.2f;
-
-        // New options for URL removal and dynamic data
-        public bool RemoveUrlsByDefault { get; set; } = true;
-        public bool PrioritizeDynamicDataByDefault { get; set; } = true;
-        public List<string> DynamicDataKeywords { get; set; } = new()
-        {
-            "current", "latest", "recent", "today", "now", "new", "updated"
-        };
+        public int MaxHistoryMessages { get; set; } = 20;
+        public bool RemoveUrlsFromResponse { get; set; } = true;
+        public bool PrioritizeDynamicData { get; set; } = true;
+        public string DefaultSystemPrompt { get; set; } = "You are a helpful assistant.";
     }
 }

@@ -9,7 +9,7 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
-namespace AgenticAI.ContextEngineering.Demo.Service
+namespace AgenticAI.ContextEngineering.Demo.Services
 {
     public class DemoService
     {
@@ -24,54 +24,12 @@ namespace AgenticAI.ContextEngineering.Demo.Service
             _logger = logger;
         }
 
-        #region Test 1: Service Registration
+        #region Test 1: AI Response with Token Caching
 
-        public async Task TestServiceRegistrationAsync()
+        public async Task TestAIResponseWithCachingAsync()
         {
-            _logger.LogInformation("📋 TEST 1: Service Registration Verification");
-
-            var services = new Dictionary<Type, string>
-            {
-                { typeof(IAIResponseService), "AI Response Service" },
-                { typeof(ISearchService), "Search Service" },
-                { typeof(IFaqService), "FAQ Service" },
-                { typeof(CachedSearchService), "Cached Search Service" },
-                { typeof(ITokenOptimizedService), "Token Optimized Service" },
-                { typeof(IKVCache), "KV Cache" },
-                { typeof(ITokenCache), "Token Cache" }
-            };
-
-            var allRegistered = true;
-
-            foreach (var kvp in services)
-            {
-                try
-                {
-                    var service = _serviceProvider.GetService(kvp.Key);
-                    var isRegistered = service != null;
-                    allRegistered = allRegistered && isRegistered;
-                    Console.WriteLine($"  {(isRegistered ? "✅" : "❌")} {kvp.Value}: {(isRegistered ? "Registered" : "NOT Registered")}");
-                }
-                catch (Exception ex)
-                {
-                    allRegistered = false;
-                    Console.WriteLine($"  ❌ {kvp.Value}: Error - {ex.Message}");
-                }
-            }
-
-            Console.WriteLine($"\n  📊 Summary: {(allRegistered ? "✅ All services registered!" : "❌ Some services missing")}");
+            Console.WriteLine("🤖 TEST: AI Response with Token Caching");
             Console.WriteLine(new string('=', 60));
-
-            await Task.CompletedTask;
-        }
-
-        #endregion
-
-        #region Test 2: AI Response Service
-
-        public async Task TestAIResponseAsync()
-        {
-            Console.WriteLine("🤖 TEST 2: AI Response Service");
 
             try
             {
@@ -82,106 +40,102 @@ namespace AgenticAI.ContextEngineering.Demo.Service
                     return;
                 }
 
-                var request = new AIResponseRequest
+                var tokenCache = _serviceProvider.GetService<ITokenCache>();
+                if (tokenCache == null)
                 {
-                    Query = "What is artificial intelligence?",
-                    UserQuery = "What is artificial intelligence?",
-                    Temperature = 0.7f,
-                    MaxTokens = 200,
-                    UseCache = true,
-                    SystemPrompt = "You are a helpful assistant. Provide concise and accurate answers."
-                };
-
-                Console.WriteLine($"  📝 Query: {request.Query}");
-
-                var stopwatch = Stopwatch.StartNew();
-                var response = await aiService.GenerateResponseAsync(request);
-                stopwatch.Stop();
-
-                if (response != null && response.IsSuccess)
-                {
-                    var preview = response.Response?.Length > 100 ? response.Response.Substring(0, 100) + "..." : response.Response;
-                    Console.WriteLine($"  ✅ Response: {preview}");
-                    Console.WriteLine($"  ⏱️ Time: {stopwatch.ElapsedMilliseconds}ms");
-                    Console.WriteLine($"  📊 Tokens: {response.TokenCount} (Prompt: {response.PromptTokens}, Completion: {response.CompletionTokens})");
-                    Console.WriteLine($"  💾 From Cache: {(response.FromCache ? "Yes" : "No")}");
-                }
-                else
-                {
-                    Console.WriteLine($"  ❌ Error: {response?.Error ?? "Unknown error"}");
-                }
-
-                Console.WriteLine(new string('=', 60));
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"  ❌ Error: {ex.Message}");
-            }
-        }
-
-        #endregion
-
-        #region Test 3: FAQ Service
-
-        public async Task TestFaqServiceAsync()
-        {
-            Console.WriteLine("📚 TEST 3: FAQ Service");
-
-            try
-            {
-                var faqService = _serviceProvider.GetService<IFaqService>();
-                if (faqService == null)
-                {
-                    Console.WriteLine("  ❌ IFaqService not registered");
+                    Console.WriteLine("  ❌ ITokenCache not registered");
                     return;
                 }
 
-                // Try to load FAQ from default path
-                var filePath = "Data/faq.json";
-                await faqService.TryLoadAsync(filePath);
-
-                if (!faqService.IsLoaded)
+                var queries = new[]
                 {
-                    Console.WriteLine("  ⚠️ FAQ file not loaded. Creating sample FAQ data...");
-                    // Create sample FAQ data or use fallback
-                }
-
-                var queries = new[] { "return policy", "reset password", "payment" };
+                    "What is artificial intelligence?",
+                    "Explain machine learning in simple terms.",
+                    "What is the difference between AI and ML?"
+                };
 
                 foreach (var query in queries)
                 {
-                    Console.WriteLine($"  📝 Query: {query}");
+                    Console.WriteLine($"\n  📝 Query: {query}");
 
+                    // ✅ First call - should be a cache MISS
+                    Console.WriteLine("    🔄 First call (should be cache MISS)...");
                     var stopwatch = Stopwatch.StartNew();
-                    var results = await faqService.SearchFaqsAsync(query, topResults: 2, minScore: 0.1);
+
+                    var request = new AIResponseRequest
+                    {
+                        Query = query,
+                        UserQuery = query,
+                        Temperature = 0.7f,
+                        MaxTokens = 200,
+                        UseCache = true,
+                        SystemPrompt = "You are a helpful assistant. Provide concise answers."
+                    };
+
+                    var response1 = await aiService.GenerateResponseAsync(request);
                     stopwatch.Stop();
 
-                    Console.WriteLine($"    ✅ Found: {results.Count} FAQs");
-                    Console.WriteLine($"    ⏱️ Time: {stopwatch.ElapsedMilliseconds}ms");
+                    var fromCache1 = response1.FromCache ? "Yes" : "No";
+                    var preview1 = response1.Response?.Length > 100 ? response1.Response.Substring(0, 100) + "..." : response1.Response;
 
-                    if (results.Count > 0)
+                    Console.WriteLine($"      ✅ Response: {preview1}");
+                    Console.WriteLine($"      ⏱️ Time: {stopwatch.ElapsedMilliseconds}ms");
+                    Console.WriteLine($"      💾 From Cache: {fromCache1}");
+                    Console.WriteLine($"      📊 Tokens: {response1.TokenCount}");
+
+                    // ✅ Second call - should be a cache HIT
+                    Console.WriteLine($"    🔄 Second call (should be cache HIT)...");
+                    stopwatch.Restart();
+
+                    var response2 = await aiService.GenerateResponseAsync(request);
+                    stopwatch.Stop();
+
+                    var fromCache2 = response2.FromCache ? "Yes" : "No";
+
+                    Console.WriteLine($"      ✅ Response: {(response2.Response?.Length > 100 ? response2.Response.Substring(0, 100) + "..." : response2.Response)}");
+                    Console.WriteLine($"      ⏱️ Time: {stopwatch.ElapsedMilliseconds}ms");
+                    Console.WriteLine($"      💾 From Cache: {fromCache2}");
+                    Console.WriteLine($"      📊 Tokens: {response2.TokenCount}");
+
+                    // ✅ Check if caching worked
+                    if (fromCache1 == "No" && fromCache2 == "Yes")
                     {
-                        var top = results[0];
-                        Console.WriteLine($"    🏆 Top Result: {top.Title ?? "Untitled"}");
-                        Console.WriteLine($"       Score: {top.Score:F3}");
+                        Console.WriteLine($"      ✅ Caching WORKED! ({(stopwatch.ElapsedMilliseconds < 50 ? "Fast response" : "Cache hit")})");
+                    }
+                    else if (fromCache1 == "No" && fromCache2 == "No")
+                    {
+                        Console.WriteLine($"      ⚠️ Caching may not be working (both calls were cache MISS)");
                     }
                 }
+
+                // ✅ Get token stats
+                var stats = tokenCache.GetTokenStats();
+                Console.WriteLine($"\n  📊 Token Cache Statistics:");
+                Console.WriteLine($"    Total Tokens Cached: {stats.TotalTokensCached:N0}");
+                Console.WriteLine($"    Total Tokens Saved: {stats.TotalTokensSaved:N0}");
+                Console.WriteLine($"    Cache Hit Rate: {stats.CacheHitRate:P2}");
+                Console.WriteLine($"    Cost Saved: ${stats.CostSaved:F2}");
 
                 Console.WriteLine(new string('=', 60));
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"  ❌ Error: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"     Inner: {ex.InnerException.Message}");
+                }
             }
         }
 
         #endregion
 
-        #region Test 4: Token Optimized Service
+        #region Test 2: Token Optimized Service
 
         public async Task TestTokenOptimizedServiceAsync()
         {
-            Console.WriteLine("💰 TEST 4: Token Optimized Service");
+            Console.WriteLine("💰 TEST: Token Optimized Service");
+            Console.WriteLine(new string('=', 60));
 
             try
             {
@@ -214,7 +168,7 @@ namespace AgenticAI.ContextEngineering.Demo.Service
                         }
                     };
 
-                    Console.WriteLine($"  📝 Query: {query}");
+                    Console.WriteLine($"\n  📝 Query: {query}");
 
                     var stopwatch = Stopwatch.StartNew();
                     var response = await tokenService.GetOptimizedResponseAsync(query, options);
@@ -226,6 +180,7 @@ namespace AgenticAI.ContextEngineering.Demo.Service
                         Console.WriteLine($"    ✅ Answer: {preview}");
                         Console.WriteLine($"    ⏱️ Time: {stopwatch.ElapsedMilliseconds}ms");
                         Console.WriteLine($"    💾 From Cache: {(response.FromCache ? "Yes" : "No")}");
+                        Console.WriteLine($"    📊 Confidence: {response.Confidence:F2}");
                     }
                     else
                     {
@@ -249,145 +204,39 @@ namespace AgenticAI.ContextEngineering.Demo.Service
 
         #endregion
 
-        #region Test 5: RAG Pipeline
+        #region Test 3: Token Cache Stats
 
-        public async Task TestRAGPipelineAsync()
+        public async Task TestTokenCacheStatsAsync()
         {
-            Console.WriteLine("🧠 TEST 5: Full RAG Pipeline");
+            Console.WriteLine("📊 TEST: Token Cache Statistics");
+            Console.WriteLine(new string('=', 60));
 
             try
             {
-                var aiService = _serviceProvider.GetService<IAIResponseService>();
-                var searchService = _serviceProvider.GetService<CachedSearchService>();
-
-                if (aiService == null || searchService == null)
+                var tokenCache = _serviceProvider.GetService<ITokenCache>();
+                if (tokenCache == null)
                 {
-                    Console.WriteLine("  ❌ Required services not registered");
+                    Console.WriteLine("  ❌ ITokenCache not registered");
                     return;
                 }
 
-                var query = "What is the future of AI technology?";
-                Console.WriteLine($"  📝 Query: {query}");
+                var stats = tokenCache.GetTokenStats();
 
-                // Step 1: Search
-                Console.WriteLine("  🔍 Step 1: Searching knowledge base...");
-                var searchRequest = new SearchRequest
-                {
-                    Query = query,
-                    TopResults = 3,
-                    IncludeScoreBreakdown = true
-                };
-
-                var searchStopwatch = Stopwatch.StartNew();
-                var searchResponse = await searchService.HybridSearchAsync(searchRequest);
-                searchStopwatch.Stop();
-
-                Console.WriteLine($"    ✅ Found {searchResponse.Results.Count} results in {searchStopwatch.ElapsedMilliseconds}ms");
-
-                // Step 2: Generate AI Response with Context
-                Console.WriteLine("  🤖 Step 2: Generating AI response with context...");
-
-                var context = searchResponse.Results.Select(r => r.Content).ToList();
-                var aiRequest = new AIResponseRequest
-                {
-                    Query = query,
-                    UserQuery = query,
-                    SystemPrompt = "You are a helpful assistant. Use the provided context to answer the question.",
-                    Temperature = 0.5f,
-                    MaxTokens = 300,
-                    UseCache = true,
-                    ModuleData = new Dictionary<string, string>
-                    {
-                        ["Context"] = string.Join("\n\n", context)
-                    }
-                };
-
-                var aiStopwatch = Stopwatch.StartNew();
-                var aiResponse = await aiService.GenerateResponseAsync(aiRequest);
-                aiStopwatch.Stop();
-
-                if (aiResponse.IsSuccess)
-                {
-                    var preview = aiResponse.Response?.Length > 150 ? aiResponse.Response.Substring(0, 150) + "..." : aiResponse.Response;
-                    Console.WriteLine($"    ✅ Generated response in {aiStopwatch.ElapsedMilliseconds}ms");
-                    Console.WriteLine($"    📝 Answer: {preview}");
-                    Console.WriteLine($"    📊 Tokens: {aiResponse.TokenCount}");
-                }
-                else
-                {
-                    Console.WriteLine($"    ❌ Error: {aiResponse.Error}");
-                }
-
-                Console.WriteLine(new string('=', 60));
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"  ❌ Error: {ex.Message}");
-            }
-        }
-
-        #endregion
-
-        #region Test 6: Batch Processing
-
-        public async Task TestBatchProcessingAsync()
-        {
-            Console.WriteLine("📦 TEST 6: Batch Processing");
-
-            try
-            {
-                var tokenService = _serviceProvider.GetService<ITokenOptimizedService>();
-                if (tokenService == null)
-                {
-                    Console.WriteLine("  ❌ ITokenOptimizedService not registered");
-                    return;
-                }
-
-                var queries = new List<string>
-                {
-                    "What is AI?",
-                    "What is machine learning?",
-                    "What is deep learning?",
-                    "What is natural language processing?",
-                    "What is computer vision?"
-                };
-
-                Console.WriteLine($"  📝 Processing {queries.Count} queries in batch...");
-
-                var options = new OptimizedRequestOptions
-                {
-                    SystemPrompt = "You are a helpful assistant. Give brief, accurate answers.",
-                    MaxTokens = 100,
-                    Temperature = 0.3f,
-                    UseCache = true,
-                    Metadata = new Dictionary<string, string>
-                    {
-                        ["BatchId"] = Guid.NewGuid().ToString(),
-                        ["Category"] = "AI Concepts"
-                    }
-                };
-
-                var stopwatch = Stopwatch.StartNew();
-                var results = await tokenService.GetBatchOptimizedResponsesAsync(queries, options);
-                stopwatch.Stop();
-
-                Console.WriteLine($"  ✅ Completed in {stopwatch.ElapsedMilliseconds}ms");
-                Console.WriteLine($"  📊 Results: {results.Count} responses");
-
-                foreach (var kvp in results)
-                {
-                    var isSuccess = kvp.Value.IsSuccess;
-                    var key = kvp.Key.Length > 30 ? kvp.Key.Substring(0, 30) + "..." : kvp.Key;
-                    var value = isSuccess && kvp.Value.Answer != null
-                        ? kvp.Value.Answer.Length > 50 ? kvp.Value.Answer.Substring(0, 50) + "..." : kvp.Value.Answer
-                        : kvp.Value.Error ?? "Unknown error";
-                    Console.WriteLine($"    {(isSuccess ? "✅" : "❌")} {key} → {value}");
-                }
-
-                var stats = tokenService.GetTokenStats();
-                Console.WriteLine($"\n  📊 Total Stats:");
+                Console.WriteLine($"\n  📊 Token Cache Statistics:");
+                Console.WriteLine($"    Total Tokens Cached: {stats.TotalTokensCached:N0}");
                 Console.WriteLine($"    Total Tokens Saved: {stats.TotalTokensSaved:N0}");
+                Console.WriteLine($"    Total Prompts Cached: {stats.TotalPromptsCached:N0}");
+                Console.WriteLine($"    Total Completions Cached: {stats.TotalCompletionsCached:N0}");
+                Console.WriteLine($"    Total Embeddings Cached: {stats.TotalEmbeddingsCached:N0}");
                 Console.WriteLine($"    Cache Hit Rate: {stats.CacheHitRate:P2}");
+                Console.WriteLine($"    Cost Saved: ${stats.CostSaved:F2}");
+                Console.WriteLine($"    Last Updated: {stats.StatsUpdated:yyyy-MM-dd HH:mm:ss} UTC");
+
+                Console.WriteLine("\n  📈 Token Savings by Type:");
+                foreach (var kvp in stats.TokenSavingsByType)
+                {
+                    Console.WriteLine($"    {kvp.Key}: {kvp.Value:N0} tokens");
+                }
 
                 Console.WriteLine(new string('=', 60));
             }
@@ -399,11 +248,51 @@ namespace AgenticAI.ContextEngineering.Demo.Service
 
         #endregion
 
-        #region Test 7: Streaming
+        #region Test 4: Clear Token Cache
 
-        public async Task TestStreamingAsync()
+        public async Task TestClearTokenCacheAsync()
         {
-            Console.WriteLine("🌊 TEST 7: Streaming");
+            Console.WriteLine("🗑️ TEST: Clear Token Cache");
+            Console.WriteLine(new string('=', 60));
+
+            try
+            {
+                var tokenCache = _serviceProvider.GetService<ITokenCache>();
+                if (tokenCache == null)
+                {
+                    Console.WriteLine("  ❌ ITokenCache not registered");
+                    return;
+                }
+
+                var statsBefore = tokenCache.GetTokenStats();
+                Console.WriteLine($"\n  📊 Stats Before Clear:");
+                Console.WriteLine($"    Total Tokens Cached: {statsBefore.TotalTokensCached:N0}");
+                Console.WriteLine($"    Total Tokens Saved: {statsBefore.TotalTokensSaved:N0}");
+
+                await tokenCache.ClearAsync();
+                Console.WriteLine($"\n  ✅ Token cache cleared!");
+
+                var statsAfter = tokenCache.GetTokenStats();
+                Console.WriteLine($"\n  📊 Stats After Clear:");
+                Console.WriteLine($"    Total Tokens Cached: {statsAfter.TotalTokensCached:N0}");
+                Console.WriteLine($"    Total Tokens Saved: {statsAfter.TotalTokensSaved:N0}");
+
+                Console.WriteLine(new string('=', 60));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"  ❌ Error: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region Test 5: Comparison - With and Without Cache
+
+        public async Task TestCacheComparisonAsync()
+        {
+            Console.WriteLine("⚡ TEST: Cache Performance Comparison");
+            Console.WriteLine(new string('=', 60));
 
             try
             {
@@ -414,38 +303,54 @@ namespace AgenticAI.ContextEngineering.Demo.Service
                     return;
                 }
 
-                var query = "Explain the concept of machine learning in 3 sentences.";
-                Console.WriteLine($"  📝 Query: {query}");
-                Console.WriteLine("  📤 Streaming Response:");
+                var query = "What is the meaning of life?";
+                Console.WriteLine($"\n  📝 Query: {query}");
 
+                // ✅ Test 1: Without Cache
+                Console.WriteLine("\n  🔄 Test 1: Without Cache...");
                 var request = new AIResponseRequest
                 {
                     Query = query,
                     UserQuery = query,
-                    Temperature = 0.5f,
-                    MaxTokens = 150,
-                    Stream = true,
-                    SystemPrompt = "You are a helpful assistant. Give concise answers.",
-                    ModuleData = new Dictionary<string, string>
-                    {
-                        ["Topic"] = "Machine Learning",
-                        ["Format"] = "Concise"
-                    }
+                    UseCache = false,
+                    Temperature = 0.7f,
+                    MaxTokens = 200
                 };
 
-                var chunks = new List<string>();
-                await foreach (var chunk in aiService.GenerateStreamingResponseAsync(request))
-                {
-                    if (!chunk.IsComplete && !string.IsNullOrEmpty(chunk.Content))
-                    {
-                        chunks.Add(chunk.Content);
-                        Console.Write(chunk.Content);
-                    }
-                }
+                var stopwatch = Stopwatch.StartNew();
+                var responseNoCache = await aiService.GenerateResponseAsync(request);
+                stopwatch.Stop();
 
-                Console.WriteLine("\n");
-                Console.WriteLine($"  ✅ Complete Response: {string.Concat(chunks)}");
-                Console.WriteLine($"  📊 Total Chunks: {chunks.Count}");
+                Console.WriteLine($"    ⏱️ Time: {stopwatch.ElapsedMilliseconds}ms");
+                Console.WriteLine($"    📊 Tokens: {responseNoCache.TokenCount}");
+
+                // ✅ Test 2: With Cache (First call - MISS)
+                Console.WriteLine("\n  🔄 Test 2: With Cache (First call - should be MISS)...");
+                request.UseCache = true;
+                stopwatch.Restart();
+                var responseWithCache1 = await aiService.GenerateResponseAsync(request);
+                stopwatch.Stop();
+
+                Console.WriteLine($"    ⏱️ Time: {stopwatch.ElapsedMilliseconds}ms");
+                Console.WriteLine($"    📊 Tokens: {responseWithCache1.TokenCount}");
+                Console.WriteLine($"    💾 From Cache: {responseWithCache1.FromCache}");
+
+                // ✅ Test 3: With Cache (Second call - HIT)
+                Console.WriteLine("\n  🔄 Test 3: With Cache (Second call - should be HIT)...");
+                stopwatch.Restart();
+                var responseWithCache2 = await aiService.GenerateResponseAsync(request);
+                stopwatch.Stop();
+
+                Console.WriteLine($"    ⏱️ Time: {stopwatch.ElapsedMilliseconds}ms");
+                Console.WriteLine($"    📊 Tokens: {responseWithCache2.TokenCount}");
+                Console.WriteLine($"    💾 From Cache: {responseWithCache2.FromCache}");
+
+                // ✅ Performance comparison
+                Console.WriteLine($"\n  📊 Performance Comparison:");
+                Console.WriteLine($"    Without Cache: {stopwatch.ElapsedMilliseconds}ms");
+                Console.WriteLine($"    With Cache (Hit): {stopwatch.ElapsedMilliseconds}ms");
+                Console.WriteLine($"    Speed Improvement: {(responseNoCache.ProcessingTimeMs > 0 && responseWithCache2.ProcessingTimeMs > 0 ?
+                    $"{((responseNoCache.ProcessingTimeMs - responseWithCache2.ProcessingTimeMs) / (double)responseNoCache.ProcessingTimeMs * 100):F0}% faster" : "N/A")}");
 
                 Console.WriteLine(new string('=', 60));
             }
@@ -455,56 +360,43 @@ namespace AgenticAI.ContextEngineering.Demo.Service
             }
         }
 
-        #endregion
-        #region Test 8: Caching
-
-        public async Task TestCachingAsync()
+        public async Task TestKVCacheDirectlyAsync()
         {
-            Console.WriteLine("🗄️ TEST 8: Caching Infrastructure");
+            Console.WriteLine("🗄️ TEST: KV Cache Direct Access");
+            Console.WriteLine(new string('=', 60));
 
             try
             {
-                var cache = _serviceProvider.GetService<IKVCache>();
-                if (cache == null)
+                var kvCache = _serviceProvider.GetService<IKVCache>();
+                if (kvCache == null)
                 {
                     Console.WriteLine("  ❌ IKVCache not registered");
                     return;
                 }
 
-                var testKey = "test:key";
-                var testValue = new { Name = "Test", Value = 123, Timestamp = DateTime.UtcNow };
+                // ✅ Test Set
+                var testKey = "test:ai:response:hello";
+                var testValue = "Hello, this is a test cached value!";
 
                 Console.WriteLine($"  📝 Setting cache: {testKey}");
-                await cache.SetAsync(testKey, testValue, TimeSpan.FromMinutes(5));
+                await kvCache.SetAsync(testKey, testValue, TimeSpan.FromMinutes(5));
 
+                // ✅ Test Get
                 Console.WriteLine($"  🔍 Getting cache: {testKey}");
-
-                // ✅ FIX: Use proper type instead of dynamic
-                var retrieved = await cache.GetAsync<Dictionary<string, object>>(testKey);
+                var retrieved = await kvCache.GetAsync<string>(testKey);
 
                 Console.WriteLine($"  ✅ Retrieved: {retrieved != null}");
                 if (retrieved != null)
                 {
-                    // Safely access dictionary values
-                    if (retrieved.TryGetValue("Name", out var nameObj))
-                        Console.WriteLine($"     Name: {nameObj}");
-                    if (retrieved.TryGetValue("Value", out var valueObj))
-                        Console.WriteLine($"     Value: {valueObj}");
-                    if (retrieved.TryGetValue("Timestamp", out var timeObj))
-                        Console.WriteLine($"     Timestamp: {timeObj}");
+                    Console.WriteLine($"     Value: {retrieved}");
                 }
 
+                // ✅ Test Remove
                 Console.WriteLine($"  🗑️ Removing cache: {testKey}");
-                await cache.RemoveAsync(testKey);
+                await kvCache.RemoveAsync(testKey);
 
-                var afterRemove = await cache.GetAsync<Dictionary<string, object>>(testKey);
+                var afterRemove = await kvCache.GetAsync<string>(testKey);
                 Console.WriteLine($"  ✅ After Remove: {(afterRemove == null ? "Not found (correct)" : "Found (incorrect)")}");
-
-                var stats = cache.GetStatistics();
-                Console.WriteLine($"\n  📊 Cache Statistics:");
-                Console.WriteLine($"    Cache Name: {stats.CacheName}");
-                Console.WriteLine($"    Total Items: {stats.TotalItems}");
-                Console.WriteLine($"    Hit Rate: {stats.HitRate:P2}");
 
                 Console.WriteLine(new string('=', 60));
             }

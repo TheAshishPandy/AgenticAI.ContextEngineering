@@ -54,7 +54,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
             }
         }
 
-        public async Task<AIResponseResult> GenerateResponseAsync(
+        public async Task<AIResponseResult> GenerateResponseAsync1(
             AIResponseRequest request,
             CancellationToken cancellationToken = default)
         {
@@ -194,6 +194,84 @@ namespace AgenticAI.ContextEngineering.Core.Services
         public Task<string> GenerateTokenReportAsync()
         {
             return Task.FromResult("Simple AI Service - No token tracking");
+        }
+
+
+        // AgenticAI.ContextEngineering.Core/Services/AIResponseService.cs - Add this method
+
+     
+
+        public async Task<AIResponseResult> GenerateResponseAsync(
+            AIResponseRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            try
+            {
+                if (!_isConfigured || _chatClient == null)
+                {
+                    return new AIResponseResult
+                    {
+                        Response = "⚠️ Azure OpenAI is not configured. Please check your appsettings.json.",
+                        IsSuccess = false,
+                        Query = request.UserQuery,
+                        ProcessingTimeMs = stopwatch.ElapsedMilliseconds,
+                        Error = "Azure OpenAI not configured"
+                    };
+                }
+
+                _logger.LogDebug("Generating response for: {Query}", request.UserQuery);
+
+                var messages = new List<OpenAI.Chat.ChatMessage>
+        {
+            new SystemChatMessage(_options.Value.SystemPrompt ?? "You are a helpful assistant.")
+        };
+
+                if (request.ConversationHistory?.Any() == true)
+                {
+                    foreach (var msg in request.ConversationHistory.TakeLast(10))
+                    {
+                        if (string.Equals(msg.Role, "user", StringComparison.OrdinalIgnoreCase))
+                            messages.Add(new UserChatMessage(msg.Content));
+                        else if (string.Equals(msg.Role, "assistant", StringComparison.OrdinalIgnoreCase))
+                            messages.Add(new AssistantChatMessage(msg.Content));
+                    }
+                }
+
+                messages.Add(new UserChatMessage(request.UserQuery));
+
+                var response = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
+                var completion = response.Value;
+
+                var responseText = completion.Content.Count > 0 ? completion.Content[0].Text : string.Empty;
+
+                return new AIResponseResult
+                {
+                    Response = responseText,
+                    Answer = responseText,
+                    PromptTokens = completion.Usage?.InputTokenCount ?? 0,
+                    CompletionTokens = completion.Usage?.OutputTokenCount ?? 0,
+                    TokenCount = completion.Usage?.TotalTokenCount ?? 0,
+                    ProcessingTimeMs = stopwatch.ElapsedMilliseconds,
+                    Query = request.UserQuery,
+                    IsSuccess = true,
+                    FromCache = false,
+                    CacheLevel = "Generated"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating AI response for: {Query}", request.UserQuery);
+                return new AIResponseResult
+                {
+                    Error = ex.Message,
+                    IsSuccess = false,
+                    Query = request.UserQuery,
+                    ProcessingTimeMs = stopwatch.ElapsedMilliseconds,
+                    FromCache = false
+                };
+            }
         }
     }
 }

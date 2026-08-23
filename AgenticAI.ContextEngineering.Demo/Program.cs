@@ -4,15 +4,11 @@ using AgenticAI.ContextEngineering.Core.Extensions;
 using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
 using AgenticAI.ContextEngineering.Core.Search;
-using AgenticAI.ContextEngineering.Core.Services;
-using AgenticAI.ContextEngineering.Demo.Service;
+using AgenticAI.ContextEngineering.Demo.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace AgenticAI.ContextEngineering.Demo
@@ -29,7 +25,7 @@ namespace AgenticAI.ContextEngineering.Demo
             try
             {
                 // Parse command line args
-                var testToRun = args.Length > 0 ? args[0].ToLower() : "search";
+                var testToRun = args.Length > 0 ? args[0].ToLower() : "token-cache";
 
                 // Build configuration
                 var configuration = new ConfigurationBuilder()
@@ -55,7 +51,6 @@ namespace AgenticAI.ContextEngineering.Demo
                 services.AddContextEngineering(configuration);
 
                 // ✅ Register demo services
-                services.AddScoped<SearchDemo>();
                 services.AddScoped<DemoService>();
 
                 var serviceProvider = services.BuildServiceProvider();
@@ -85,19 +80,13 @@ namespace AgenticAI.ContextEngineering.Demo
 
             var services = new Dictionary<Type, string>
             {
-                { typeof(IQdrantClient), "Qdrant Client" },
-                { typeof(SearchIndex), "Search Index" },
-                { typeof(HybridSearchEngine), "Hybrid Search Engine" },
-                { typeof(LexicalSearch), "Lexical Search" },
-                { typeof(SemanticSearch), "Semantic Search" },
-                { typeof(IEmbeddingGenerator), "Embedding Generator" },
-                { typeof(ISearchService), "Search Service" },
-                { typeof(CachedSearchService), "Cached Search Service" },
                 { typeof(IAIResponseService), "AI Response Service" },
+                { typeof(ITokenCache), "Token Cache" },
+                { typeof(IKVCache), "KV Cache" },
+                { typeof(ISearchService), "Search Service" },
                 { typeof(IFaqService), "FAQ Service" },
                 { typeof(ITokenOptimizedService), "Token Optimized Service" },
-                { typeof(IKVCache), "KV Cache" },
-                { typeof(ITokenCache), "Token Cache" }
+                { typeof(IQdrantClient), "Qdrant Client" }
             };
 
             foreach (var kvp in services)
@@ -114,18 +103,6 @@ namespace AgenticAI.ContextEngineering.Demo
                 }
             }
 
-            // Check Qdrant collection
-            try
-            {
-                var qdrant = serviceProvider.GetService<IQdrantClient>();
-                if (qdrant != null)
-                {
-                    var size = qdrant.GetCollectionSizeAsync().Result;
-                    Console.WriteLine($"  📊 Qdrant documents: {size}");
-                }
-            }
-            catch { /* Ignore */ }
-
             Console.WriteLine();
         }
 
@@ -134,7 +111,6 @@ namespace AgenticAI.ContextEngineering.Demo
             try
             {
                 var demo = serviceProvider.GetService<DemoService>();
-                var searchDemo = serviceProvider.GetService<SearchDemo>();
 
                 if (demo == null)
                 {
@@ -147,56 +123,36 @@ namespace AgenticAI.ContextEngineering.Demo
 
                 switch (testToRun)
                 {
-                    case "search":
-                        if (searchDemo != null)
-                        {
-                            await searchDemo.RunAsync();
-                        }
-                        else
-                        {
-                            Console.WriteLine("❌ SearchDemo not available");
-                        }
+                    case "token-cache":
+                        await demo.TestAIResponseWithCachingAsync();
                         break;
 
-                    case "ai":
-                        await demo.TestAIResponseAsync();
+                    case "token-stats":
+                        await demo.TestTokenCacheStatsAsync();
                         break;
 
-                    case "faq":
-                        await demo.TestFaqServiceAsync();
+                    case "token-clear":
+                        await demo.TestClearTokenCacheAsync();
                         break;
 
-                    case "token":
+                    case "token-compare":
+                        await demo.TestCacheComparisonAsync();
+                        break;
+
+                    case "token-optimized":
                         await demo.TestTokenOptimizedServiceAsync();
                         break;
 
-                    case "rag":
-                        await demo.TestRAGPipelineAsync();
+                    case "all-token":
+                        await RunAllTokenTestsAsync(demo);
                         break;
-
-                    case "batch":
-                        await demo.TestBatchProcessingAsync();
+                    // In Program.cs - add this to the switch
+                    case "kv-test":
+                        await demo.TestKVCacheDirectlyAsync();
                         break;
-
-                    case "stream":
-                        await demo.TestStreamingAsync();
-                        break;
-
-                    case "caching":
-                        await demo.TestCachingAsync();
-                        break;
-
-                    case "services":
-                        await demo.TestServiceRegistrationAsync();
-                        break;
-
-                    case "all":
-                        await RunAllDemosAsync(demo, searchDemo);
-                        break;
-
                     default:
                         Console.WriteLine($"❌ Unknown test: {testToRun}");
-                        Console.WriteLine("   Available tests: search, ai, faq, token, rag, batch, stream, caching, services, all");
+                        Console.WriteLine("   Available tests: token-cache, token-stats, token-clear, token-compare, token-optimized, all-token");
                         break;
                 }
             }
@@ -211,50 +167,12 @@ namespace AgenticAI.ContextEngineering.Demo
             Console.ReadKey();
         }
 
-        static async Task RunAllDemosAsync(DemoService demo, SearchDemo searchDemo)
+        static async Task RunAllTokenTestsAsync(DemoService demo)
         {
-            var demos = new List<(string Name, Func<Task> Action, bool IsAvailable)>
-            {
-                ("Search Demo", async () => { if (searchDemo != null) await searchDemo.RunAsync(); }, searchDemo != null),
-                ("Service Registration", async () => await demo.TestServiceRegistrationAsync(), true),
-                ("AI Response", async () => await demo.TestAIResponseAsync(), true),
-                ("FAQ Service", async () => await demo.TestFaqServiceAsync(), true),
-                ("Token Optimized", async () => await demo.TestTokenOptimizedServiceAsync(), true),
-                ("RAG Pipeline", async () => await demo.TestRAGPipelineAsync(), true),
-                ("Batch Processing", async () => await demo.TestBatchProcessingAsync(), true),
-                ("Streaming", async () => await demo.TestStreamingAsync(), true),
-                ("Caching", async () => await demo.TestCachingAsync(), true)
-            };
-
-            var total = demos.Count;
-            var completed = 0;
-
-            foreach (var (name, action, isAvailable) in demos)
-            {
-                if (!isAvailable)
-                {
-                    Console.WriteLine($"\n⏭️ Skipping {name} (not available)");
-                    continue;
-                }
-
-                Console.WriteLine($"\n🔄 Running {name}...");
-                Console.WriteLine(new string('─', 40));
-
-                try
-                {
-                    await action();
-                    completed++;
-                    Console.WriteLine($"✅ {name} completed successfully");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"❌ {name} failed: {ex.Message}");
-                }
-            }
-
-            Console.WriteLine("\n╔══════════════════════════════════════════════════════════╗");
-            Console.WriteLine($"║  ✅ Demos Completed: {completed}/{total} Successfully    ║");
-            Console.WriteLine("╚══════════════════════════════════════════════════════════╝");
+            await demo.TestAIResponseWithCachingAsync();
+            await demo.TestTokenCacheStatsAsync();
+            await demo.TestCacheComparisonAsync();
+            await demo.TestTokenOptimizedServiceAsync();
         }
     }
 }

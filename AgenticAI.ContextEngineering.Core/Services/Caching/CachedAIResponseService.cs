@@ -1,10 +1,12 @@
-﻿// AgenticAI.ContextEngineering.Core/Services/CachedAIResponseService.cs
+﻿// AgenticAI.ContextEngineering.Core/Services/Caching/CachedAIResponseService.cs
 using AgenticAI.ContextEngineering.Core.Caching;
 using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -33,11 +35,13 @@ namespace AgenticAI.ContextEngineering.Core.Services
         {
             try
             {
+                // ✅ Generate consistent cache key from query and user
+                var cacheKey = GenerateCacheKey(request);
+
                 if (request.UseCache)
                 {
-                    var cacheKey = $"{CACHE_PREFIX}{request.Query.GetHashCode()}_{request.UserId}";
+                    // ✅ Try to get from KV Cache
                     var cached = await _kvCache.GetAsync<AIResponseResult>(cacheKey);
-
                     if (cached != null)
                     {
                         _logger.LogInformation($"✅ AI Response cache HIT: {request.Query}");
@@ -48,13 +52,19 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 }
 
                 _logger.LogInformation($"❌ AI Response cache MISS: {request.Query}");
+
+                // ✅ Generate response
                 var response = await _inner.GenerateResponseAsync(request, cancellationToken);
 
-                if (response != null && response.IsSuccess && request.UseCache)
+                // ✅ Cache the response if successful
+                if (response != null && response.IsSuccess && !string.IsNullOrEmpty(response.Response) && request.UseCache)
                 {
-                    var cacheKey = $"{CACHE_PREFIX}{request.Query.GetHashCode()}_{request.UserId}";
+                    // ✅ Ensure response is properly marked as not from cache
+                    response.FromCache = false;
+                    response.CacheLevel = "Generated";
+
                     await _kvCache.SetAsync(cacheKey, response, TimeSpan.FromHours(24));
-                    _logger.LogInformation($"✅ AI Response cached: {request.Query}");
+                    _logger.LogInformation($"✅ AI Response cached for: {request.Query} with key: {cacheKey}");
                 }
 
                 return response;
@@ -66,7 +76,8 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 {
                     Query = request.Query,
                     Error = ex.Message,
-                    IsSuccess = false
+                    IsSuccess = false,
+                    FromCache = false
                 };
             }
         }
@@ -82,7 +93,32 @@ namespace AgenticAI.ContextEngineering.Core.Services
         }
 
         public TokenUsageStats GetTokenStats() => _inner.GetTokenStats();
-        public async Task ClearTokenCacheAsync() => await _inner.ClearTokenCacheAsync();
+
+        public async Task ClearTokenCacheAsync()
+        {
+            await _inner.ClearTokenCacheAsync();
+            await _kvCache.ClearAsync();
+            _logger.LogInformation("🗑️ All caches cleared");
+        }
+
         public async Task<string> GenerateTokenReportAsync() => await _inner.GenerateTokenReportAsync();
+
+        // ✅ Generate consistent cache key
+        private string GenerateCacheKey(AIResponseRequest request)
+        {
+            // Use query, user ID, and a hash of the module data
+            var queryKey = request.Query?.Trim().ToLowerInvariant() ?? string.Empty;
+            var userId = request.UserId ?? "default";
+            var key = $"{CACHE_PREFIX}{queryKey.GetHashCode()}_{userId}";
+
+            // If there's module data, include it in the key
+            if (request.ModuleData != null && request.ModuleData.Count > 0)
+            {
+                var moduleHash = string.Join("_", request.ModuleData.OrderBy(k => k.Key).Select(k => $"{k.Key}={k.Value}"));
+                key += $"_{moduleHash.GetHashCode()}";
+            }
+
+            return key;
+        }
     }
 }

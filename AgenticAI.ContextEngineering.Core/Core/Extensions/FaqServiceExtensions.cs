@@ -1,4 +1,5 @@
-﻿// Core/Extensions/FaqServiceExtensions.cs
+﻿// AgenticAI.ContextEngineering.Core/Extensions/FaqServiceExtensions.cs
+using AgenticAI.ContextEngineering.Core.Embeddings;
 using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
 using AgenticAI.ContextEngineering.Core.Search;
@@ -15,17 +16,27 @@ namespace AgenticAI.ContextEngineering.Core.Extensions
             this IServiceCollection services,
             Action<SearchOptions>? configureOptions = null)
         {
-            // Register SearchOptions
             var options = new SearchOptions();
             configureOptions?.Invoke(options);
             services.AddSingleton(options);
 
-            // Register core components
+            // ✅ Register SearchIndex as Singleton
             services.AddSingleton<SearchIndex>();
-            services.AddScoped<LexicalSearch>();
 
-            // Register FaqService
-            services.AddScoped<IFaqService, FaqService>();
+            // ✅ Register LexicalSearch
+            services.AddSingleton<LexicalSearch>();
+
+            // ✅ Register SemanticSearch
+            services.AddSingleton<SemanticSearch>();
+
+            // ✅ Register HybridSearchEngine
+            services.AddSingleton<HybridSearchEngine>();
+
+            // ✅ Register EmbeddingGenerator
+            services.AddSingleton<IEmbeddingGenerator, MockEmbeddingGenerator>();
+
+            // ✅ Register FAQ Service
+            services.AddSingleton<IFaqService, CachedFaqService>();
 
             return services;
         }
@@ -36,8 +47,8 @@ namespace AgenticAI.ContextEngineering.Core.Extensions
         {
             services.AddSingleton(options);
             services.AddSingleton<SearchIndex>();
-            services.AddScoped<LexicalSearch>();
-            services.AddScoped<IFaqService, FaqService>();
+            services.AddSingleton<LexicalSearch>();
+            services.AddSingleton<IFaqService, CachedFaqService>();
 
             return services;
         }

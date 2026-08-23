@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
 
@@ -24,13 +25,13 @@ namespace AgenticAI.ContextEngineering.Core.Search
             SemanticSearch semanticSearch,
             IEmbeddingGenerator embeddingGenerator,
             ILogger<HybridSearchEngine> logger,
-            SearchOptions options)
+            IOptions<SearchOptions> options)  // ✅ Use IOptions
         {
-            _lexicalSearch = lexicalSearch;
-            _semanticSearch = semanticSearch;
-            _embeddingGenerator = embeddingGenerator;
-            _logger = logger;
-            _options = options;
+            _lexicalSearch = lexicalSearch ?? throw new ArgumentNullException(nameof(lexicalSearch));
+            _semanticSearch = semanticSearch ?? throw new ArgumentNullException(nameof(semanticSearch));
+            _embeddingGenerator = embeddingGenerator ?? throw new ArgumentNullException(nameof(embeddingGenerator));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         }
 
         public async Task<SearchResponse> HybridSearchAsync(
@@ -43,7 +44,6 @@ namespace AgenticAI.ContextEngineering.Core.Search
             {
                 _logger.LogDebug($"HybridSearchAsync started for query: '{request.Query}'");
 
-                // ✅ Step 1: Generate query embedding for semantic search
                 float[] queryVector = null;
                 if (request.QueryVector != null && request.QueryVector.Length > 0)
                 {
@@ -65,18 +65,16 @@ namespace AgenticAI.ContextEngineering.Core.Search
                     }
                 }
 
-                // ✅ Step 2: Perform lexical search
                 var lexicalTask = _lexicalSearch.SearchAsync(request, cancellationToken);
 
-                // ✅ Step 3: Perform semantic search (pass queryVector as separate parameter)
                 SearchResponse semanticResponse = null;
                 if (queryVector != null && queryVector.Length > 0)
                 {
                     try
                     {
                         semanticResponse = await _semanticSearch.SearchAsync(
-                            request,           // SearchRequest
-                            queryVector,       // float[] queryVector (separate parameter)
+                            request,
+                            queryVector,
                             cancellationToken
                         );
                         _logger.LogDebug($"Semantic search returned {semanticResponse?.Results?.Count ?? 0} results");
@@ -92,11 +90,9 @@ namespace AgenticAI.ContextEngineering.Core.Search
                     _logger.LogWarning("No query vector available for semantic search, using lexical only");
                 }
 
-                // ✅ Step 4: Get lexical results
                 var lexicalResponse = await lexicalTask;
                 _logger.LogDebug($"Lexical search returned {lexicalResponse?.Results?.Count ?? 0} results");
 
-                // ✅ Step 5: Fuse results using RRF
                 List<SearchResult> fusedResults;
                 var hasSemanticResults = semanticResponse?.Results != null && semanticResponse.Results.Any();
                 var hasLexicalResults = lexicalResponse?.Results != null && lexicalResponse.Results.Any();
@@ -126,7 +122,6 @@ namespace AgenticAI.ContextEngineering.Core.Search
                     fusedResults = new List<SearchResult>();
                 }
 
-                // ✅ Step 6: Apply reranking if enabled
                 if (_options.EnableReranking && fusedResults.Any())
                 {
                     _logger.LogDebug("Applying reranking to results");
@@ -178,7 +173,6 @@ namespace AgenticAI.ContextEngineering.Core.Search
             string query,
             CancellationToken cancellationToken)
         {
-            // Simple reranking - keep as is for now
             return await Task.FromResult(results.OrderByDescending(r => r.Score).ToList());
         }
     }

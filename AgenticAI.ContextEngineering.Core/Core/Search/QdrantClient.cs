@@ -27,14 +27,24 @@ namespace AgenticAI.ContextEngineering.Core.Search
             IConfiguration configuration,
             ILogger<QdrantClient> logger)
         {
-            _host = configuration["Qdrant:Host"] ?? throw new InvalidOperationException("Qdrant:Host not configured");
-            _apiKey = configuration["Qdrant:ApiKey"] ?? throw new InvalidOperationException("Qdrant:ApiKey not configured");
-            _collectionName = configuration["Qdrant:CollectionName"] ?? "documents";
+            // ✅ Try both configuration keys
+            _host = configuration["Qdrant:Host"] ?? configuration["QdrantSettings:Host"]
+                ?? throw new InvalidOperationException("Qdrant:Host not configured");
+
+            _apiKey = configuration["Qdrant:ApiKey"] ?? configuration["QdrantSettings:Key"]
+                ?? string.Empty;
+
+            _collectionName = configuration["Qdrant:CollectionName"] ?? configuration["QdrantSettings:collectionName"]
+                ?? "documents";
+
             _vectorSize = configuration.GetValue<int>("Qdrant:VectorSize", 1536);
             _logger = logger;
 
             _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Add("api-key", _apiKey);
+            if (!string.IsNullOrEmpty(_apiKey))
+            {
+                _httpClient.DefaultRequestHeaders.Add("api-key", _apiKey);
+            }
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
         }
 
@@ -123,7 +133,6 @@ namespace AgenticAI.ContextEngineering.Core.Search
                     return new List<SearchResult>();
                 }
 
-                // ✅ FIX: Deserialize with proper options
                 var options = new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true,
@@ -133,7 +142,6 @@ namespace AgenticAI.ContextEngineering.Core.Search
                 var result = JsonSerializer.Deserialize<QdrantSearchResponse>(responseContent, options);
                 var results = new List<SearchResult>();
 
-                // ✅ FIX: Result is a direct list of points
                 if (result?.Result != null && result.Result.Count > 0)
                 {
                     foreach (var point in result.Result)
@@ -144,9 +152,11 @@ namespace AgenticAI.ContextEngineering.Core.Search
                         string source = "Unknown";
                         string title = string.Empty;
                         string contentValue = string.Empty;
+                        string id = point.Id?.ToString() ?? Guid.NewGuid().ToString();
 
                         if (payload != null)
                         {
+                            // Extract common fields
                             if (payload.TryGetValue("source", out var sourceElement))
                             {
                                 source = sourceElement.ValueKind == JsonValueKind.String
@@ -165,15 +175,19 @@ namespace AgenticAI.ContextEngineering.Core.Search
                                     ? contentElement.GetString() ?? string.Empty
                                     : string.Empty;
                             }
-                        }
-
-                        // ✅ Also check for "question_id" to use as ID
-                        string id = point.Id?.ToString() ?? Guid.NewGuid().ToString();
-                        if (payload != null && payload.TryGetValue("question_id", out var questionIdElement))
-                        {
-                            if (questionIdElement.ValueKind == JsonValueKind.Number)
+                            if (payload.TryGetValue("question_id", out var questionIdElement))
                             {
-                                id = questionIdElement.GetInt32().ToString();
+                                if (questionIdElement.ValueKind == JsonValueKind.Number)
+                                {
+                                    id = questionIdElement.GetInt32().ToString();
+                                }
+                            }
+                            if (payload.TryGetValue("id", out var idElement))
+                            {
+                                if (idElement.ValueKind == JsonValueKind.String)
+                                {
+                                    id = idElement.GetString() ?? id;
+                                }
                             }
                         }
 
@@ -191,7 +205,8 @@ namespace AgenticAI.ContextEngineering.Core.Search
                         {
                             foreach (var item in payload)
                             {
-                                if (item.Key != "content" && item.Key != "title" && item.Key != "source")
+                                if (item.Key != "content" && item.Key != "title" && item.Key != "source"
+                                    && item.Key != "question_id" && item.Key != "id")
                                 {
                                     searchResult.Metadata[item.Key] = item.Value.ValueKind == JsonValueKind.String
                                         ? item.Value.GetString() ?? "null"
@@ -230,7 +245,6 @@ namespace AgenticAI.ContextEngineering.Core.Search
             {
                 var url = $"{_host.TrimEnd('/')}/collections/{_collectionName}/points";
 
-                // ✅ Convert ID to numeric or UUID for Qdrant
                 object pointId;
                 if (ulong.TryParse(id, out var numericId))
                 {
@@ -242,7 +256,6 @@ namespace AgenticAI.ContextEngineering.Core.Search
                 }
                 else
                 {
-                    // Use hash for string IDs
                     pointId = (ulong)id.GetHashCode();
                     _logger.LogWarning($"Converted string ID '{id}' to numeric ID {pointId}");
                 }
@@ -261,6 +274,9 @@ namespace AgenticAI.ContextEngineering.Core.Search
                         payload[item.Key] = item.Value;
                     }
                 }
+
+                // Add ID to payload for reference
+                payload["id"] = id;
 
                 var requestBody = new
                 {
@@ -376,10 +392,9 @@ namespace AgenticAI.ContextEngineering.Core.Search
         }
 
         // ============================================================
-        // ✅ FIXED: Response Models - Match Actual Qdrant Response
+        // Response Models
         // ============================================================
 
-        // ✅ Qdrant search response - result is a direct array
         private class QdrantSearchResponse
         {
             [JsonPropertyName("result")]
@@ -407,7 +422,6 @@ namespace AgenticAI.ContextEngineering.Core.Search
             public Dictionary<string, JsonElement>? Payload { get; set; }
         }
 
-        // ✅ Qdrant collection response
         private class QdrantCollectionResponse
         {
             [JsonPropertyName("result")]

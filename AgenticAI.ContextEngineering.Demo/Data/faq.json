@@ -1,0 +1,54 @@
+﻿{
+  "faqs": [
+    {
+      "id": "faq-001",
+      "question": "What is your return policy?",
+      "answer": "Our return policy allows returns within 30 days of purchase with original receipt.",
+      "category": "Policy",
+      "keywords": [ "return", "policy", "refund", "exchange" ],
+      "language": 1,
+      "priority": 5,
+      "tags": [ "policy", "returns" ]
+    },
+    {
+      "id": "faq-002",
+      "question": "How do I reset my password?",
+      "answer": "You can reset your password by clicking 'Forgot Password' on the login page.",
+      "category": "Account",
+      "keywords": [ "password", "reset", "login", "security" ],
+      "language": 1,
+      "priority": 5,
+      "tags": [ "account", "security" ]
+    },
+    {
+      "id": "faq-003",
+      "question": "What payment methods do you accept?",
+      "answer": "We accept all major credit cards, PayPal, and bank transfers.",
+      "category": "Payment",
+      "keywords": [ "payment", "credit card", "paypal", "bank transfer" ],
+      "language": 1,
+      "priority": 4,
+      "tags": [ "payment", "billing" ]
+    },
+    {
+      "id": "faq-004",
+      "question": "How can I contact customer support?",
+      "answer": "You can contact support via email at support@example.com or call 1-800-123-4567.",
+      "category": "Support",
+      "keywords": [ "support", "contact", "help", "email", "phone" ],
+      "language": 1,
+      "priority": 5,
+      "tags": [ "support", "contact" ]
+    },
+    {
+      "id": "faq-005",
+      "question": "What are your business hours?",
+      "answer": "Our business hours are Monday-Friday 9 AM - 6 PM EST.",
+      "category": "General",
+      "keywords": [ "hours", "business", "time", "schedule" ],
+      "language": 1,
+      "priority": 3,
+      "tags": [ "general", "hours" ]
+    }
+  ]
+}

@@ -1,4 +1,5 @@
-﻿using AgenticAI.ContextEngineering.Core.Models;
+﻿// AgenticAI.ContextEngineering.Core/Interfaces/ITokenOptimizedService.cs
+using AgenticAI.ContextEngineering.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -7,22 +8,24 @@ using System.Threading.Tasks;
 namespace AgenticAI.ContextEngineering.Core.Interfaces
 {
     /// <summary>
-    /// AI Response Service Interface
+    /// Token Optimized Service Interface
     /// </summary>
-    public interface IAIResponseService
+    public interface ITokenOptimizedService
     {
         /// <summary>
-        /// Generate AI response for a request
+        /// Get optimized response for a single query
         /// </summary>
-        Task<AIResponseResult> GenerateResponseAsync(
-            AIResponseRequest request,
+        Task<OptimizedResponse> GetOptimizedResponseAsync(
+            string query,
+            OptimizedRequestOptions? options = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Generate AI response with streaming support
+        /// Get optimized responses for multiple queries in batch
         /// </summary>
-        IAsyncEnumerable<AIStreamChunk> GenerateStreamingResponseAsync(
-            AIResponseRequest request,
+        Task<Dictionary<string, OptimizedResponse>> GetBatchOptimizedResponsesAsync(
+            List<string> queries,
+            OptimizedRequestOptions? options = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>

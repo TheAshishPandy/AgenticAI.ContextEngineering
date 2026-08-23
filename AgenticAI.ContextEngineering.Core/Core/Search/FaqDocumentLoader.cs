@@ -27,7 +27,16 @@ namespace AgenticAI.ContextEngineering.Core.Services
             try
             {
                 var jsonContent = await File.ReadAllTextAsync(_faqFilePath);
-                var faqCollection = JsonSerializer.Deserialize<FaqCollection>(jsonContent);
+
+                // ✅ Use case-insensitive deserialization
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true, 
+                    AllowTrailingCommas = true,
+                    ReadCommentHandling = JsonCommentHandling.Skip
+                };
+
+                var faqCollection = JsonSerializer.Deserialize<FaqCollection>(jsonContent, options);
 
                 if (faqCollection?.Documents == null || faqCollection.Documents.Count == 0)
                 {
@@ -40,9 +49,9 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 {
                     var document = new Document
                     {
-                        Id = faqDoc.Id,
-                        Title = faqDoc.Title,
-                        Content = faqDoc.Content,
+                        Id = faqDoc.Id ?? Guid.NewGuid().ToString(),
+                        Title = faqDoc.Title ?? "Untitled",
+                        Content = faqDoc.Content ?? string.Empty,
                         Source = faqDoc.Source ?? "FAQ",
                         Metadata = faqDoc.Metadata ?? new Dictionary<string, object>(),
                         IndexedAt = DateTime.UtcNow
@@ -55,7 +64,8 @@ namespace AgenticAI.ContextEngineering.Core.Services
             }
             catch (JsonException ex)
             {
-                throw new InvalidOperationException($"Failed to parse FAQ JSON: {ex.Message}", ex);
+                // ✅ Log the actual JSON error
+                throw new InvalidOperationException($"Failed to parse FAQ JSON at line {ex.LineNumber}, position {ex.BytePositionInLine}: {ex.Message}", ex);
             }
             catch (Exception ex)
             {

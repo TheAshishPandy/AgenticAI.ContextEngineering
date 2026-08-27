@@ -1,5 +1,4 @@
 ﻿// AgenticAI.ContextEngineering.Core/Services/TokenOptimizedService.cs
-using AgenticAI.ContextEngineering.Core.Caching;
 using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
 using Microsoft.Extensions.Logging;
@@ -11,9 +10,6 @@ using System.Threading.Tasks;
 
 namespace AgenticAI.ContextEngineering.Core.Services
 {
-    /// <summary>
-    /// Token Optimized Service - Uses IAIResponseService and ITokenCache
-    /// </summary>
     public class TokenOptimizedService : ITokenOptimizedService
     {
         private readonly ITokenCache _tokenCache;
@@ -42,33 +38,40 @@ namespace AgenticAI.ContextEngineering.Core.Services
             {
                 _logger.LogInformation($"📝 Processing query: {query}");
 
-                // ✅ Check cache first using ITokenCache
                 var cacheKey = $"optimized:{query.GetHashCode()}";
-                var cachedResponse = await _tokenCache.GetCachedResponseAsync<OptimizedResponse>(cacheKey);
 
-                if (cachedResponse != null && options.UseCache == true)
+                // Try to get from token cache
+                if (options.UseCache == true)
                 {
-                    _logger.LogInformation($"✅ Cache HIT for: {query}");
-                    cachedResponse.FromCache = true;
-                    cachedResponse.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
-                    return cachedResponse;
+                    if (_tokenCache.TryGet<OptimizedResponse>(cacheKey, out var cachedResponse) && cachedResponse != null)
+                    {
+                        _logger.LogInformation($"✅ Cache HIT for: {query}");
+                        cachedResponse.FromCache = true;
+                        cachedResponse.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
+                        return cachedResponse;
+                    }
                 }
 
                 _logger.LogInformation($"❌ Cache MISS for: {query}");
 
-                // ✅ Build AI request
                 var request = new AIResponseRequest
                 {
-                    Query = query,
                     UserQuery = query,
+                    Query = query,
                     SystemPrompt = options.SystemPrompt ?? "You are a helpful assistant.",
                     MaxTokens = options.MaxTokens ?? 500,
                     Temperature = options.Temperature ?? 0.7f,
-                    UseCache = options.UseCache ?? true,
-                    ModuleData = options.Metadata ?? new Dictionary<string, string>()
+                    UseCache = options.UseCache ?? true
                 };
 
-                // ✅ Generate AI response
+                if (options.Metadata != null)
+                {
+                    foreach (var kvp in options.Metadata)
+                    {
+                        request.ModuleData[kvp.Key] = kvp.Value?.ToString() ?? string.Empty;
+                    }
+                }
+
                 var response = await _aiResponseService.GenerateResponseAsync(request, cancellationToken);
 
                 if (!response.IsSuccess)
@@ -77,18 +80,11 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     {
                         Query = query,
                         Error = response.Error,
-                        ProcessingTimeMs = stopwatch.ElapsedMilliseconds
+                        ProcessingTimeMs = stopwatch.ElapsedMilliseconds,
+                        FromCache = false
                     };
                 }
 
-                // ✅ Track token usage
-                await _tokenCache.TrackUsageAsync(
-                    query,
-                    response.PromptTokens,
-                    response.CompletionTokens,
-                    cancellationToken);
-
-                // ✅ Create optimized response
                 var optimizedResponse = new OptimizedResponse
                 {
                     Answer = response.Response,
@@ -99,15 +95,17 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     TokenUsage = new TokenUsageDetail
                     {
                         PromptTokens = response.PromptTokens,
-                        CompletionTokens = response.CompletionTokens,
-                        CachedTokens = response.TokenCount
+                        CompletionTokens = response.CompletionTokens
                     }
                 };
 
-                // ✅ Cache the response
                 if (options.UseCache == true)
                 {
-                    await _tokenCache.CacheResponseAsync(cacheKey, optimizedResponse, TimeSpan.FromHours(24));
+                    _tokenCache.Set(
+                        cacheKey,
+                        optimizedResponse,
+                        tokenCount: response.TokenCount,
+                        expiration: TimeSpan.FromHours(24));
                     _logger.LogInformation($"✅ Response cached for: {query}");
                 }
 
@@ -120,7 +118,8 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 {
                     Query = query,
                     Error = ex.Message,
-                    ProcessingTimeMs = stopwatch.ElapsedMilliseconds
+                    ProcessingTimeMs = stopwatch.ElapsedMilliseconds,
+                    FromCache = false
                 };
             }
         }
@@ -143,28 +142,19 @@ namespace AgenticAI.ContextEngineering.Core.Services
 
         public TokenUsageStats GetTokenStats()
         {
-            return _tokenCache.GetTokenStats();
+            return _tokenCache.GetStats();
         }
 
         public async Task ClearTokenCacheAsync()
         {
-            await _tokenCache.ClearAsync();
+            _tokenCache.Clear();
             _logger.LogInformation("🗑️ Token cache cleared");
+            await Task.CompletedTask;
         }
 
         public async Task<string> GenerateTokenReportAsync()
         {
-            var stats = _tokenCache.GetTokenStats();
-            return $@"
-╔══════════════════════════════════════════════════════════════╗
-║           TOKEN OPTIMIZATION REPORT                         ║
-╚══════════════════════════════════════════════════════════════╝
-Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC
-Total Tokens Cached: {stats.TotalTokensCached:N0}
-Total Tokens Saved: {stats.TotalTokensSaved:N0}
-Cache Hit Rate: {stats.CacheHitRate:P2}
-Cost Saved: ${stats.CostSaved:F2}
-";
+            return await _tokenCache.GenerateReportAsync();
         }
     }
 }

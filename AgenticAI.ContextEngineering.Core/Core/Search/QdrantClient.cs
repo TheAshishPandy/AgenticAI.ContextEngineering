@@ -99,7 +99,7 @@ namespace AgenticAI.ContextEngineering.Core.Search
         }
 
         public async Task<List<SearchResult>> SearchAsync(
-            float[] queryVector,
+            float[] queryVector,    
             int topK = 10,
             float scoreThreshold = 0.3f,
             Dictionary<string, object>? filters = null,
@@ -116,7 +116,7 @@ namespace AgenticAI.ContextEngineering.Core.Search
                 {
                     vector = queryVector,
                     limit = topK,
-                    score_threshold = scoreThreshold,
+                    //score_threshold = scoreThreshold,
                     with_payload = true,
                     with_vector = false
                 };

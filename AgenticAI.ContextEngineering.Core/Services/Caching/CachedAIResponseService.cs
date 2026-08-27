@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,19 +14,21 @@ namespace AgenticAI.ContextEngineering.Core.Services
 {
     public class CachedAIResponseService : IAIResponseService
     {
-        private readonly IAIResponseService _inner;
+        // ✅ Changed from IAIResponseService to TokenAwareAIResponseService (concrete type)
+        private readonly TokenAwareAIResponseService _inner;
         private readonly IKVCache _kvCache;
         private readonly ILogger<CachedAIResponseService> _logger;
         private const string CACHE_PREFIX = "ai:response:";
 
+        // ✅ Constructor takes concrete TokenAwareAIResponseService
         public CachedAIResponseService(
-            IAIResponseService inner,
+            TokenAwareAIResponseService inner,
             IKVCache kvCache,
             ILogger<CachedAIResponseService> logger)
         {
-            _inner = inner;
-            _kvCache = kvCache;
-            _logger = logger;
+            _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+            _kvCache = kvCache ?? throw new ArgumentNullException(nameof(kvCache));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<AIResponseResult> GenerateResponseAsync(
@@ -35,46 +37,42 @@ namespace AgenticAI.ContextEngineering.Core.Services
         {
             try
             {
-                // ✅ Generate consistent cache key from query and user
                 var cacheKey = GenerateCacheKey(request);
+                _logger.LogDebug($"KV cache key: {cacheKey}");
 
                 if (request.UseCache)
                 {
-                    // ✅ Try to get from KV Cache
                     var cached = await _kvCache.GetAsync<AIResponseResult>(cacheKey);
                     if (cached != null)
                     {
-                        _logger.LogInformation($"✅ AI Response cache HIT: {request.Query}");
+                        _logger.LogInformation($"✅ KV Cache HIT: {request.UserQuery}");
                         cached.FromCache = true;
                         cached.CacheLevel = "KVCache";
                         return cached;
                     }
                 }
 
-                _logger.LogInformation($"❌ AI Response cache MISS: {request.Query}");
+                _logger.LogInformation($"❌ KV Cache MISS: {request.UserQuery}");
 
-                // ✅ Generate response
                 var response = await _inner.GenerateResponseAsync(request, cancellationToken);
 
-                // ✅ Cache the response if successful
                 if (response != null && response.IsSuccess && !string.IsNullOrEmpty(response.Response) && request.UseCache)
                 {
-                    // ✅ Ensure response is properly marked as not from cache
                     response.FromCache = false;
                     response.CacheLevel = "Generated";
 
                     await _kvCache.SetAsync(cacheKey, response, TimeSpan.FromHours(24));
-                    _logger.LogInformation($"✅ AI Response cached for: {request.Query} with key: {cacheKey}");
+                    _logger.LogInformation($"✅ AI Response cached in KV for: {request.UserQuery}");
                 }
 
-                return response;
+                return response ?? throw new InvalidOperationException("Response is null");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in CachedAIResponseService for: {Query}", request.Query);
+                _logger.LogError(ex, "Error in CachedAIResponseService for: {Query}", request.UserQuery);
                 return new AIResponseResult
                 {
-                    Query = request.Query,
+                    Query = request.UserQuery,
                     Error = ex.Message,
                     IsSuccess = false,
                     FromCache = false
@@ -84,7 +82,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
 
         public async IAsyncEnumerable<AIStreamChunk> GenerateStreamingResponseAsync(
             AIResponseRequest request,
-            CancellationToken cancellationToken = default)
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             await foreach (var chunk in _inner.GenerateStreamingResponseAsync(request, cancellationToken))
             {
@@ -92,7 +90,10 @@ namespace AgenticAI.ContextEngineering.Core.Services
             }
         }
 
-        public TokenUsageStats GetTokenStats() => _inner.GetTokenStats();
+        public TokenUsageStats GetTokenStats()
+        {
+            return _inner.GetTokenStats();
+        }
 
         public async Task ClearTokenCacheAsync()
         {
@@ -101,17 +102,17 @@ namespace AgenticAI.ContextEngineering.Core.Services
             _logger.LogInformation("🗑️ All caches cleared");
         }
 
-        public async Task<string> GenerateTokenReportAsync() => await _inner.GenerateTokenReportAsync();
+        public async Task<string> GenerateTokenReportAsync()
+        {
+            return await _inner.GenerateTokenReportAsync();
+        }
 
-        // ✅ Generate consistent cache key
         private string GenerateCacheKey(AIResponseRequest request)
         {
-            // Use query, user ID, and a hash of the module data
-            var queryKey = request.Query?.Trim().ToLowerInvariant() ?? string.Empty;
+            var queryKey = request.UserQuery?.Trim().ToLowerInvariant() ?? string.Empty;
             var userId = request.UserId ?? "default";
             var key = $"{CACHE_PREFIX}{queryKey.GetHashCode()}_{userId}";
 
-            // If there's module data, include it in the key
             if (request.ModuleData != null && request.ModuleData.Count > 0)
             {
                 var moduleHash = string.Join("_", request.ModuleData.OrderBy(k => k.Key).Select(k => $"{k.Key}={k.Value}"));

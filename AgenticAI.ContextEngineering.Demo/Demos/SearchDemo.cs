@@ -1,7 +1,8 @@
-﻿// SearchDemo.cs
+﻿// SearchDemo.cs - Updated to implement IDemo
 using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
 using AgenticAI.ContextEngineering.Core.Search;
+using AgenticAI.ContextEngineering.Demo.Demos;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -10,9 +11,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AgenticAI.ContextEngineering.Demo
+namespace AgenticAI.ContextEngineering.Demo.Demos
 {
-    public class SearchDemo
+    public class SearchDemo : IDemo
     {
         private readonly LexicalSearch _lexicalSearch;
         private readonly SemanticSearch _semanticSearch;
@@ -21,6 +22,12 @@ namespace AgenticAI.ContextEngineering.Demo
         private readonly IQdrantClient? _qdrantClient;
         private readonly IEmbeddingGenerator _embeddingGenerator;
         private readonly ILogger<SearchDemo> _logger;
+
+        // IDemo Implementation
+        public string Name => "Search Demo";
+        public string Description => "Tests Lexical, Semantic, and Hybrid Search with RRF";
+        public bool IsConfigured => _searchIndex != null && _lexicalSearch != null && _semanticSearch != null;
+        public string ConfigurationStatus => IsConfigured ? "✅ Configured" : "❌ Not Configured";
 
         public SearchDemo(
             LexicalSearch lexicalSearch,
@@ -43,8 +50,7 @@ namespace AgenticAI.ContextEngineering.Demo
         public async Task RunAsync()
         {
             Console.WriteLine("╔═══════════════════════════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║  🔍 SmartChatBot.Search - Complete Search Demo                              ║");
-            Console.WriteLine("║  Lexical | Semantic | Hybrid Search with RRF                               ║");
+            Console.WriteLine("║  🔍 Search Demo - Lexical | Semantic | Hybrid Search with RRF               ║");
             Console.WriteLine("╚═══════════════════════════════════════════════════════════════════════════════╝");
             Console.WriteLine();
 

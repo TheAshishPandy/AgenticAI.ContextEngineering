@@ -14,9 +14,6 @@ using AgenticAI.ContextEngineering.Core.Search;
 
 namespace AgenticAI.ContextEngineering.Core.Services
 {
-    /// <summary>
-    /// Implementation of hybrid search service with caching and token optimization
-    /// </summary>
     public class SearchService : ISearchService
     {
         private readonly HybridSearchEngine _hybridSearchEngine;
@@ -65,7 +62,6 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 ValidateAndNormalizeRequest(request);
                 _logger.LogDebug("Performing {Algorithm} search for query: '{Query}'", request.Algorithm, request.Query);
 
-                // Check cache
                 if (_enableCaching)
                 {
                     var cacheKey = GenerateCacheKey(request);
@@ -80,10 +76,9 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     }
                 }
 
-                // Token optimization
-                var optimizedQuery = await OptimizeQueryTokens(request.Query, cancellationToken);
+                // Token optimization - FIXED: Proper async/await
+                var optimizedQuery = await OptimizeQueryTokensAsync(request.Query, cancellationToken);
 
-                // Build search request
                 var libraryRequest = new SearchRequest
                 {
                     Query = optimizedQuery,
@@ -92,7 +87,6 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     MinimumRelevanceScore = request.MinimumRelevanceScore
                 };
 
-                // Handle embedding for semantic/hybrid search
                 if (request.Algorithm == SearchAlgorithm.Cosine || request.Algorithm == SearchAlgorithm.Hybrid)
                 {
                     try
@@ -117,7 +111,6 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     }
                 }
 
-                // Execute search
                 var libraryResults = await _hybridSearchEngine.HybridSearchAsync(libraryRequest, cancellationToken);
 
                 if (libraryResults?.Results == null)
@@ -138,7 +131,6 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 response.Metadata["TopResults"] = request.TopResults;
                 response.Metadata["FromCache"] = false;
 
-                // Cache results
                 if (_enableCaching && response.Results.Any())
                 {
                     var cacheKey = GenerateCacheKey(request);
@@ -347,7 +339,6 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     }
                 }
 
-                // Remove stop words
                 var stopWords = new HashSet<string> { "the", "a", "an", "is", "are", "was", "were",
                     "and", "or", "but", "for", "nor", "on", "at", "to", "by", "with" };
                 var words = query.Split(' ');
@@ -355,7 +346,6 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 if (!variants.Contains(cleanQuery) && cleanQuery != query)
                     variants.Add(cleanQuery);
 
-                // Add bigrams
                 if (words.Length > 3)
                 {
                     for (int i = 0; i < words.Length - 1; i++)
@@ -443,14 +433,20 @@ namespace AgenticAI.ContextEngineering.Core.Services
         // PRIVATE HELPERS
         // ============================================================
 
-        private async Task<string> OptimizeQueryTokens(string query, CancellationToken cancellationToken)
+        // FIXED: Renamed to async method name and properly awaits
+        private async Task<string> OptimizeQueryTokensAsync(string query, CancellationToken cancellationToken)
         {
             var key = $"{TOKEN_COUNT_PREFIX}{query.GetHashCode()}";
+
+            // FIXED: Use async method properly
             var count = await _tokenCache.GetCachedTokenCountAsync(key);
 
             if (count == 0)
             {
+                // FIXED: Use CountTokens method
                 count = _tokenCache.CountTokens(query);
+
+                // FIXED: Use async method properly
                 await _tokenCache.CacheTokenCountAsync(key, count, TimeSpan.FromHours(24));
             }
 

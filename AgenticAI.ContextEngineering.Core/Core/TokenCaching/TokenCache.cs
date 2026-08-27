@@ -1,11 +1,10 @@
 ﻿// AgenticAI.ContextEngineering.Core/Caching/TokenCache.cs
+using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,192 +12,303 @@ namespace AgenticAI.ContextEngineering.Core.Caching
 {
     public class TokenCache : ITokenCache
     {
+        private readonly IMemoryCache _memoryCache;
         private readonly ILogger<TokenCache> _logger;
-        private readonly ConcurrentDictionary<string, object> _cache = new();
-        private readonly TokenUsageStats _stats = new();
-        private readonly SemaphoreSlim _lock = new(1, 1);
+        private readonly MemoryCacheEntryOptions _defaultOptions;
 
-        public TokenCache(ILogger<TokenCache> logger)
+        // Statistics tracking
+        private long _cacheHits;
+        private long _cacheMisses;
+        private long _totalTokensCached;
+        private long _totalTokensSaved;
+        private long _totalCostSaved;
+
+        private readonly ConcurrentDictionary<string, TokenCacheEntry> _cacheEntries = new();
+
+        // Separate cache for token counts
+        private readonly IMemoryCache _tokenCountCache;
+
+        public TokenCache(
+            IMemoryCache memoryCache,
+            ILogger<TokenCache> logger)
         {
-            _logger = logger;
+            _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _defaultOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24),
+                SlidingExpiration = TimeSpan.FromHours(1),
+                Priority = CacheItemPriority.Normal
+            };
+
+            // Separate cache for token counts with shorter expiration
+            _tokenCountCache = new MemoryCache(new MemoryCacheOptions
+            {
+                SizeLimit = 1000,
+                ExpirationScanFrequency = TimeSpan.FromMinutes(5)
+            });
         }
 
-        public async Task<T> GetCachedResponseAsync<T>(string cacheKey) where T : class
+        public async Task<T?> GetOrAddAsync<T>(
+            string key,
+            Func<Task<T>> factory,
+            int? tokenCount = null,
+            decimal? costPerToken = null,
+            CancellationToken cancellationToken = default)
         {
-            try
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentNullException(nameof(key));
+
+            if (_memoryCache.TryGetValue(key, out T? cachedValue) && cachedValue != null)
             {
-                if (_cache.TryGetValue(cacheKey, out var value) && value is T typedValue)
+                Interlocked.Increment(ref _cacheHits);
+
+                if (tokenCount.HasValue)
                 {
-                    _logger.LogDebug($"✅ Token Cache HIT: {cacheKey}");
-                    return typedValue;
+                    Interlocked.Add(ref _totalTokensSaved, tokenCount.Value);
+
+                    if (costPerToken.HasValue)
+                    {
+                        Interlocked.Add(ref _totalCostSaved, (long)(tokenCount.Value * costPerToken.Value * 1000000m));
+                    }
+
+                    if (_cacheEntries.TryGetValue(key, out var entry))
+                    {
+                        entry.HitCount++;
+                        entry.LastHitTime = DateTime.UtcNow;
+                    }
                 }
-                _logger.LogDebug($"❌ Token Cache MISS: {cacheKey}");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error retrieving from token cache");
+
+                _logger.LogDebug($"✅ Token cache HIT: {key}");
+                return cachedValue;
             }
 
-            return await Task.FromResult<T>(null);
+            Interlocked.Increment(ref _cacheMisses);
+            _logger.LogDebug($"❌ Token cache MISS: {key}");
+
+            var result = await factory();
+
+            if (result != null)
+            {
+                _memoryCache.Set(key, result, _defaultOptions);
+
+                if (tokenCount.HasValue)
+                {
+                    Interlocked.Add(ref _totalTokensCached, tokenCount.Value);
+
+                    _cacheEntries[key] = new TokenCacheEntry
+                    {
+                        Key = key,
+                        TokenCount = tokenCount.Value,
+                        CreatedAt = DateTime.UtcNow,
+                        HitCount = 0
+                    };
+                }
+
+                _logger.LogDebug($"✅ Token cache SET: {key}");
+            }
+
+            return result;
         }
 
-        public async Task CacheResponseAsync<T>(string cacheKey, T response, TimeSpan? expiration = null) where T : class
+        public bool TryGet<T>(string key, out T? value)
         {
-            try
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentNullException(nameof(key));
+
+            if (_memoryCache.TryGetValue(key, out T? cachedValue) && cachedValue != null)
             {
-                _cache[cacheKey] = response;
-                _stats.TotalTokensCached++;
-                _logger.LogDebug($"✅ Token Cache SET: {cacheKey}");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error saving to token cache");
+                value = cachedValue;
+                Interlocked.Increment(ref _cacheHits);
+
+                if (_cacheEntries.TryGetValue(key, out var entry))
+                {
+                    entry.HitCount++;
+                    entry.LastHitTime = DateTime.UtcNow;
+                    Interlocked.Add(ref _totalTokensSaved, entry.TokenCount);
+                }
+
+                return true;
             }
 
-            await Task.CompletedTask;
+            value = default;
+            Interlocked.Increment(ref _cacheMisses);
+            return false;
         }
 
-        public async Task TrackUsageAsync(string query, int promptTokens, int completionTokens, CancellationToken cancellationToken = default)
+        public void Set<T>(string key, T value, int? tokenCount = null, TimeSpan? expiration = null)
         {
-            await _lock.WaitAsync(cancellationToken);
-            try
-            {
-                var totalTokens = promptTokens + completionTokens;
-                _stats.TotalTokensCached += totalTokens;
-                _stats.TotalTokensSaved += totalTokens;
-                _stats.TotalPromptsCached++;
-                _stats.TotalCompletionsCached++;
-                _stats.CacheHitRate = CalculateHitRate();
-                _stats.CostSaved = (_stats.TotalTokensSaved / 1000.0) * 0.02;
-                _stats.StatsUpdated = DateTime.UtcNow;
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentNullException(nameof(key));
 
-                // Track by type
-                _stats.TokenSavingsByType["prompt"] = _stats.TokenSavingsByType.GetValueOrDefault("prompt", 0) + promptTokens;
-                _stats.TokenSavingsByType["completion"] = _stats.TokenSavingsByType.GetValueOrDefault("completion", 0) + completionTokens;
-                _stats.TokenSavingsByType["total"] = _stats.TokenSavingsByType.GetValueOrDefault("total", 0) + totalTokens;
+            var options = expiration.HasValue
+                ? new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = expiration.Value,
+                    SlidingExpiration = TimeSpan.FromMinutes(30),
+                    Priority = CacheItemPriority.Normal
+                }
+                : _defaultOptions;
 
-                _logger.LogDebug($"📊 Token usage tracked: {totalTokens} tokens");
-            }
-            finally
-            {
-                _lock.Release();
-            }
-        }
+            _memoryCache.Set(key, value, options);
 
-        public TokenUsageStats GetTokenStats()
-        {
-            return _stats;
-        }
+            if (tokenCount.HasValue)
+            {
+                Interlocked.Add(ref _totalTokensCached, tokenCount.Value);
 
-        public async Task ClearAsync()
-        {
-            await _lock.WaitAsync();
-            try
-            {
-                _cache.Clear();
-                _stats.TotalTokensCached = 0;
-                _stats.TotalTokensSaved = 0;
-                _stats.TotalPromptsCached = 0;
-                _stats.TotalCompletionsCached = 0;
-                _stats.CacheHitRate = 0;
-                _stats.CostSaved = 0;
-                _stats.TokenSavingsByType.Clear();
-                _logger.LogInformation("🗑️ Token cache cleared");
-            }
-            finally
-            {
-                _lock.Release();
+                _cacheEntries[key] = new TokenCacheEntry
+                {
+                    Key = key,
+                    TokenCount = tokenCount.Value,
+                    CreatedAt = DateTime.UtcNow,
+                    HitCount = 0
+                };
             }
         }
 
-        public string HashText(string text)
+        public void Remove(string key)
         {
-            using var sha256 = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(text);
-            var hash = sha256.ComputeHash(bytes);
-            return Convert.ToBase64String(hash).Substring(0, 32);
+            if (string.IsNullOrEmpty(key))
+                return;
+
+            _memoryCache.Remove(key);
+            _cacheEntries.TryRemove(key, out _);
+            _logger.LogDebug($"🗑️ Token cache removed: {key}");
+        }
+
+        public void Clear()
+        {
+            foreach (var key in _cacheEntries.Keys)
+            {
+                _memoryCache.Remove(key);
+            }
+
+            _cacheEntries.Clear();
+
+            Interlocked.Exchange(ref _cacheHits, 0);
+            Interlocked.Exchange(ref _cacheMisses, 0);
+            Interlocked.Exchange(ref _totalTokensCached, 0);
+            Interlocked.Exchange(ref _totalTokensSaved, 0);
+            Interlocked.Exchange(ref _totalCostSaved, 0);
+
+            _logger.LogInformation("🗑️ Token cache cleared");
+        }
+
+        public TokenUsageStats GetStats()
+        {
+            var hits = Interlocked.Read(ref _cacheHits);
+            var misses = Interlocked.Read(ref _cacheMisses);
+            var totalRequests = hits + misses;
+
+            return new TokenUsageStats
+            {
+                CacheHits = hits,
+                CacheMisses = misses,
+                TotalTokensCached = Interlocked.Read(ref _totalTokensCached),
+                TotalTokensSaved = Interlocked.Read(ref _totalTokensSaved),
+                TotalCostSaved = Interlocked.Read(ref _totalCostSaved) / 1000000m,
+                CacheHitRate = totalRequests > 0 ? (double)hits / totalRequests : 0,
+                CacheEntryCount = _cacheEntries.Count
+            };
+        }
+
+        public async Task<string> GenerateReportAsync()
+        {
+            var stats = GetStats();
+
+            return $@"
+══════════════════════════════════════════════════
+📊 TOKEN CACHE REPORT
+══════════════════════════════════════════════════
+  Cache Hits:        {stats.CacheHits:N0}
+  Cache Misses:      {stats.CacheMisses:N0}
+  Hit Rate:          {stats.CacheHitRate:P2}
+  Tokens Cached:     {stats.TotalTokensCached:N0}
+  Tokens Saved:      {stats.TotalTokensSaved:N0}
+  Cost Saved:        ${stats.TotalCostSaved:F4}
+  Cache Entries:     {stats.CacheEntryCount:N0}
+══════════════════════════════════════════════════";
+        }
+
+        // ============================================================
+        // NEW METHODS FOR TOKEN COUNTING (used by SearchService)
+        // ============================================================
+
+        public async Task<int> GetCachedTokenCountAsync(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+                return 0;
+
+            if (_tokenCountCache.TryGetValue(key, out int cachedCount))
+            {
+                return cachedCount;
+            }
+
+            return 0;
+        }
+
+        public async Task CacheTokenCountAsync(string key, int count, TimeSpan? expiration = null)
+        {
+            if (string.IsNullOrEmpty(key))
+                return;
+
+            var options = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromHours(24),
+                SlidingExpiration = TimeSpan.FromHours(1),
+                Priority = CacheItemPriority.Normal,
+                Size = 1
+            };
+
+            _tokenCountCache.Set(key, count, options);
         }
 
         public int CountTokens(string text)
         {
-            return text?.Length / 4 ?? 0;
+            if (string.IsNullOrEmpty(text))
+                return 0;
+
+            // Simple token estimation:
+            // - Split by spaces and punctuation
+            // - Approximate 1 token ≈ 4 characters for English text
+            // - This is a rough estimate, not exact
+
+            // Remove extra whitespace
+            var cleaned = System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ");
+            cleaned = cleaned.Trim();
+
+            if (string.IsNullOrEmpty(cleaned))
+                return 0;
+
+            // Count words
+            var words = cleaned.Split(new[] { ' ', '.', ',', '!', '?', ';', ':', '\n', '\r' },
+                                      StringSplitOptions.RemoveEmptyEntries);
+
+            // Approximate tokens: words * 1.3 (average tokens per word in English)
+            // Plus punctuation and special characters
+            var estimatedTokens = (int)Math.Ceiling(words.Length * 1.3);
+
+            // Add extra for numbers, symbols, and special characters
+            var specialChars = 0;
+            foreach (char c in cleaned)
+            {
+                if (!char.IsLetterOrDigit(c) && !char.IsWhiteSpace(c))
+                    specialChars++;
+            }
+            estimatedTokens += specialChars / 2;
+
+            // Minimum 1 token
+            return Math.Max(1, estimatedTokens);
         }
 
-        public long GetCacheSize()
+        private class TokenCacheEntry
         {
-            return _cache.Count;
-        }
-
-        public Task<CachedPrompt> GetPromptAsync(string promptHash)
-        {
-            // Not used in demo
-            return Task.FromResult<CachedPrompt>(null);
-        }
-
-        public Task CachePromptAsync(CachedPrompt prompt)
-        {
-            // Not used in demo
-            return Task.CompletedTask;
-        }
-
-        public Task<CachedPrompt> GetOrCachePromptAsync(string promptText)
-        {
-            // Not used in demo
-            return Task.FromResult<CachedPrompt>(null);
-        }
-
-        public Task<CachedCompletion> GetCompletionAsync(string completionHash)
-        {
-            // Not used in demo
-            return Task.FromResult<CachedCompletion>(null);
-        }
-
-        public Task CacheCompletionAsync(CachedCompletion completion)
-        {
-            // Not used in demo
-            return Task.CompletedTask;
-        }
-
-        public Task<CachedCompletion> GetOrCacheCompletionAsync(string promptText, string completionText, double confidence = 1.0)
-        {
-            // Not used in demo
-            return Task.FromResult<CachedCompletion>(null);
-        }
-
-        public Task<int> GetCachedTokenCountAsync(string cacheKey)
-        {
-            // Not used in demo
-            return Task.FromResult(0);
-        }
-
-        public Task CacheTokenCountAsync(string cacheKey, int tokenCount, TimeSpan? expiration = null)
-        {
-            // Not used in demo
-            return Task.CompletedTask;
-        }
-
-        public Task<CachedEmbedding> GetEmbeddingAsync(string textHash)
-        {
-            // Not used in demo
-            return Task.FromResult<CachedEmbedding>(null);
-        }
-
-        public Task CacheEmbeddingAsync(CachedEmbedding embedding)
-        {
-            // Not used in demo
-            return Task.CompletedTask;
-        }
-
-        public Task<CachedEmbedding> GetOrCacheEmbeddingAsync(string text, Func<string, float[]> embeddingGenerator)
-        {
-            // Not used in demo
-            return Task.FromResult<CachedEmbedding>(null);
-        }
-
-        private double CalculateHitRate()
-        {
-            var total = _stats.TotalPromptsCached + _stats.TotalCompletionsCached;
-            return total > 0 ? 0.5 : 0; // Simple estimate for demo
+            public string Key { get; set; } = string.Empty;
+            public int TokenCount { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public DateTime? LastHitTime { get; set; }
+            public long HitCount { get; set; }
         }
     }
 }

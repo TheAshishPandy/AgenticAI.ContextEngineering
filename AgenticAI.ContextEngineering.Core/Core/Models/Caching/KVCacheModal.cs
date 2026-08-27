@@ -95,6 +95,8 @@ namespace AgenticAI.ContextEngineering.Core.Core.Models.Caching
         public string SqlTableName { get; set; } = "Cache";
         public TimeSpan DistributedCacheExpiration { get; set; } = TimeSpan.FromDays(7);
         public int DefaultExpirationMinutes { get; set; } = 60;  
+        public int DefaultExpirationHours { get; set; } = 60;  
+        public int MaxSizeMB { get; set; } = 100;  
 
         // Features
         public bool EnableCompression { get; set; } = true;

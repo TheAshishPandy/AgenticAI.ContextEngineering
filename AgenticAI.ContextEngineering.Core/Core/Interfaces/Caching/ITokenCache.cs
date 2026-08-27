@@ -1,74 +1,70 @@
-﻿// AgenticAI.ContextEngineering.Core/Caching/ITokenCache.cs
+﻿// AgenticAI.ContextEngineering.Core/Interfaces/ITokenCache.cs
 using AgenticAI.ContextEngineering.Core.Models;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AgenticAI.ContextEngineering.Core.Caching
+namespace AgenticAI.ContextEngineering.Core.Interfaces
 {
     public interface ITokenCache
     {
-        // Prompt Caching
-        Task<CachedPrompt> GetPromptAsync(string promptHash);
-        Task CachePromptAsync(CachedPrompt prompt);
-        Task<CachedPrompt> GetOrCachePromptAsync(string promptText);
+        /// <summary>
+        /// Get or add a value to the cache with token tracking
+        /// </summary>
+        Task<T?> GetOrAddAsync<T>(
+            string key,
+            Func<Task<T>> factory,
+            int? tokenCount = null,
+            decimal? costPerToken = null,
+            CancellationToken cancellationToken = default);
 
-        // Completion Caching
-        Task<CachedCompletion> GetCompletionAsync(string completionHash);
-        Task CacheCompletionAsync(CachedCompletion completion);
-        Task<CachedCompletion> GetOrCacheCompletionAsync(string promptText, string completionText, double confidence = 1.0);
+        /// <summary>
+        /// Try to get a value from the cache
+        /// </summary>
+        bool TryGet<T>(string key, out T? value);
 
-        // Generic Response Caching
-        Task<T> GetCachedResponseAsync<T>(string cacheKey) where T : class;
-        Task CacheResponseAsync<T>(string cacheKey, T response, TimeSpan? expiration = null) where T : class;
+        /// <summary>
+        /// Set a value in the cache
+        /// </summary>
+        void Set<T>(string key, T value, int? tokenCount = null, TimeSpan? expiration = null);
 
-        // Token Count Caching
-        Task<int> GetCachedTokenCountAsync(string cacheKey);
-        Task CacheTokenCountAsync(string cacheKey, int tokenCount, TimeSpan? expiration = null);
+        /// <summary>
+        /// Remove a value from the cache
+        /// </summary>
+        void Remove(string key);
 
-        // ✅ Token Usage Tracking
-        Task TrackUsageAsync(string query, int promptTokens, int completionTokens, CancellationToken cancellationToken = default);
+        /// <summary>
+        /// Clear all cache entries
+        /// </summary>
+        void Clear();
 
-        // Embedding Caching
-        Task<CachedEmbedding> GetEmbeddingAsync(string textHash);
-        Task CacheEmbeddingAsync(CachedEmbedding embedding);
-        Task<CachedEmbedding> GetOrCacheEmbeddingAsync(string text, Func<string, float[]> embeddingGenerator);
+        /// <summary>
+        /// Get cache statistics
+        /// </summary>
+        TokenUsageStats GetStats();
 
-        // Utilities
-        string HashText(string text);
+        /// <summary>
+        /// Generate a cache report
+        /// </summary>
+        Task<string> GenerateReportAsync();
+
+        // ============================================================
+        // NEW METHODS FOR TOKEN COUNTING (used by SearchService)
+        // ============================================================
+
+        /// <summary>
+        /// Get cached token count for a key
+        /// </summary>
+        Task<int> GetCachedTokenCountAsync(string key);
+
+        /// <summary>
+        /// Cache a token count
+        /// </summary>
+        Task CacheTokenCountAsync(string key, int count, TimeSpan? expiration = null);
+
+        /// <summary>
+        /// Count tokens in a string (simple estimation)
+        /// </summary>
         int CountTokens(string text);
-        TokenUsageStats GetTokenStats();
-        Task ClearAsync();
-        long GetCacheSize();
-    }
-
-    public class CachedPrompt
-    {
-        public string PromptHash { get; set; } = string.Empty;
-        public string PromptText { get; set; } = string.Empty;
-        public int TokenCount { get; set; }
-        public DateTime CachedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? ExpiresAt { get; set; }
-    }
-
-    public class CachedCompletion
-    {
-        public string CompletionHash { get; set; } = string.Empty;
-        public string CompletionText { get; set; } = string.Empty;
-        public int TokenCount { get; set; }
-        public double Confidence { get; set; } = 1.0;
-        public DateTime CachedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? ExpiresAt { get; set; }
-    }
-
-    public class CachedEmbedding
-    {
-        public string TextHash { get; set; } = string.Empty;
-        public string Text { get; set; } = string.Empty;
-        public float[] Embedding { get; set; } = Array.Empty<float>();
-        public int Dimensions { get; set; }
-        public DateTime CachedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? ExpiresAt { get; set; }
     }
 }

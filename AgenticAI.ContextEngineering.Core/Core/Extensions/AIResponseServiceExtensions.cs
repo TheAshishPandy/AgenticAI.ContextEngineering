@@ -16,77 +16,6 @@ namespace AgenticAI.ContextEngineering.Core.Extensions
 {
     public static class AIResponseServiceExtensions
     {
-        /// <summary>
-        /// Add AI Response Service with Azure OpenAI - Simple registration
-        /// </summary>
-        public static IServiceCollection AddAIResponseService(
-            this IServiceCollection services,
-            IConfiguration configuration,
-            string configSection = "AIResponse")
-        {
-            if (services == null)
-                throw new ArgumentNullException(nameof(services));
-
-            if (configuration == null)
-                throw new ArgumentNullException(nameof(configuration));
-
-            // ✅ Configure AI Response Options
-            services.Configure<AIResponseOptions>(options =>
-            {
-                options.Endpoint = configuration[$"{configSection}:Endpoint"] ?? configuration["AzureOpenAI:Endpoint"] ?? string.Empty;
-                options.ApiKey = configuration[$"{configSection}:ApiKey"] ?? configuration["AzureOpenAI:Key"] ?? string.Empty;
-                options.DeploymentName = configuration[$"{configSection}:DeploymentName"] ?? configuration["AzureOpenAI:DeploymentName"] ?? "gpt-4";
-                options.Temperature = configuration.GetValue<float>($"{configSection}:Temperature", 0.7f);
-                options.MaxTokens = configuration.GetValue<int>($"{configSection}:MaxTokens", 500);
-                options.SystemPrompt = configuration[$"{configSection}:SystemPrompt"] ?? "You are a helpful assistant.";
-                options.UseCache = configuration.GetValue<bool>($"{configSection}:UseCache", true);
-                options.Model = configuration[$"{configSection}:Model"] ?? "gpt-4";
-            });
-
-            // ✅ Register AzureOpenAIClient
-            services.AddSingleton<AzureOpenAIClient>(sp =>
-            {
-                var options = sp.GetRequiredService<IOptions<AIResponseOptions>>().Value;
-
-                if (string.IsNullOrEmpty(options.Endpoint) || string.IsNullOrEmpty(options.ApiKey))
-                {
-                    var logger = sp.GetService<ILogger<AIResponseService>>();
-                    logger?.LogWarning("⚠️ Azure OpenAI credentials not configured.");
-                    return null!;
-                }
-
-                try
-                {
-                    return new AzureOpenAIClient(
-                        new Uri(options.Endpoint),
-                        new ApiKeyCredential(options.ApiKey));
-                }
-                catch (Exception ex)
-                {
-                    var logger = sp.GetService<ILogger<AIResponseService>>();
-                    logger?.LogError(ex, "❌ Failed to create AzureOpenAIClient");
-                    return null!;
-                }
-            });
-
-            // ✅ Register Base AI Response Service
-            services.AddScoped<AIResponseService>();
-
-            // ✅ Register IAIResponseService as the Cached version
-            services.AddScoped<IAIResponseService>(sp =>
-            {
-                var baseService = sp.GetRequiredService<AIResponseService>();
-                var kvCache = sp.GetRequiredService<IKVCache>();
-                var logger = sp.GetRequiredService<ILogger<CachedAIResponseService>>();
-                return new CachedAIResponseService(baseService, kvCache, logger);
-            });
-
-            return services;
-        }
-
-        /// <summary>
-        /// Add AI Response Service with Token Caching and KV Caching
-        /// </summary>
         public static IServiceCollection AddAIResponseServiceWithCaching(
             this IServiceCollection services,
             IConfiguration configuration,
@@ -98,6 +27,9 @@ namespace AgenticAI.ContextEngineering.Core.Extensions
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
 
+            Console.WriteLine("\n🤖 Registering AI Services...");
+            Console.WriteLine(new string('═', 60));
+
             // ✅ Configure AI Response Options
             services.Configure<AIResponseOptions>(options =>
             {
@@ -110,6 +42,7 @@ namespace AgenticAI.ContextEngineering.Core.Extensions
                 options.UseCache = configuration.GetValue<bool>($"{configSection}:UseCache", true);
                 options.Model = configuration[$"{configSection}:Model"] ?? "gpt-4";
             });
+            Console.WriteLine("  ✅ AIResponseOptions configured");
 
             // ✅ Register AzureOpenAIClient
             services.AddSingleton<AzureOpenAIClient>(sp =>
@@ -136,27 +69,68 @@ namespace AgenticAI.ContextEngineering.Core.Extensions
                     return null!;
                 }
             });
+            Console.WriteLine("  ✅ AzureOpenAIClient registered");
 
-            // ✅ Register Base AI Response Service
+            // ✅ Register Base AI Response Service (NO dependencies on IAIResponseService)
             services.AddScoped<AIResponseService>();
+            Console.WriteLine("  ✅ AIResponseService (Base) registered");
 
-            // ✅ Register Token Aware Service (wraps base)
-            services.AddScoped<IAIResponseService>(sp =>
+            // ✅ Register TokenAwareAIResponseService with explicit dependencies
+            // Uses concrete AIResponseService, not IAIResponseService
+            services.AddScoped<TokenAwareAIResponseService>(sp =>
             {
                 var baseService = sp.GetRequiredService<AIResponseService>();
                 var tokenCache = sp.GetRequiredService<ITokenCache>();
                 var logger = sp.GetRequiredService<ILogger<TokenAwareAIResponseService>>();
                 return new TokenAwareAIResponseService(baseService, tokenCache, logger);
             });
+            Console.WriteLine("  ✅ TokenAwareAIResponseService registered");
 
-            // ✅ Register Cached Service (wraps Token Aware)
-            services.AddScoped<IAIResponseService>(sp =>
+            // ✅ Register CachedAIResponseService with explicit dependencies
+            // Uses concrete TokenAwareAIResponseService, not IAIResponseService
+            services.AddScoped<CachedAIResponseService>(sp =>
             {
-                var inner = sp.GetRequiredService<IAIResponseService>(); // This gets TokenAwareAIResponseService
+                var tokenAware = sp.GetRequiredService<TokenAwareAIResponseService>();
                 var kvCache = sp.GetRequiredService<IKVCache>();
                 var logger = sp.GetRequiredService<ILogger<CachedAIResponseService>>();
-                return new CachedAIResponseService(inner, kvCache, logger);
+                return new CachedAIResponseService(tokenAware, kvCache, logger);
             });
+            Console.WriteLine("  ✅ CachedAIResponseService registered");
+
+            // ✅ Register IAIResponseService to resolve to CachedAIResponseService
+            services.AddScoped<IAIResponseService>(sp =>
+            {
+                Console.WriteLine("    🔍 Resolving IAIResponseService...");
+                var cachedService = sp.GetRequiredService<CachedAIResponseService>();
+                Console.WriteLine("    ✅ IAIResponseService resolved to CachedAIResponseService");
+                return cachedService;
+            });
+            Console.WriteLine("  ✅ IAIResponseService registered as Cached");
+
+            Console.WriteLine(new string('═', 60));
+            Console.WriteLine("✅ AI services registration complete!\n");
+
+            return services;
+        }
+
+        public static IServiceCollection AddTokenCaching(
+            this IServiceCollection services)
+        {
+            services.AddSingleton<ITokenCache, TokenCache>();
+            return services;
+        }
+
+        public static IServiceCollection AddKVCaching(
+            this IServiceCollection services,
+            Action<KVCacheOptions>? configure = null)
+        {
+            services.AddMemoryCache();
+            services.AddSingleton<IKVCache, MultiTierKVCache>();
+
+            if (configure != null)
+            {
+                services.Configure(configure);
+            }
 
             return services;
         }

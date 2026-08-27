@@ -21,7 +21,7 @@ namespace AgenticAI.ContextEngineering.Core.Reports
 
         public async Task<string> GenerateTokenReportAsync()
         {
-            var stats = _tokenCache.GetTokenStats();
+            var stats = _tokenCache.GetStats();
             var sb = new StringBuilder();
 
             sb.AppendLine("╔══════════════════════════════════════════════════════════════╗");

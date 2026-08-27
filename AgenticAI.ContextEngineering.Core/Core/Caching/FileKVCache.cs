@@ -1,239 +1,179 @@
-﻿using AgenticAI.ContextEngineering.Core.Core.Models.Caching;
+﻿// AgenticAI.ContextEngineering.Core/Caching/FileKVCache.cs
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace AgenticAI.ContextEngineering.Core.Caching
 {
     public class FileKVCache : IKVCache
     {
-        private readonly ILogger<FileKVCache> _logger;
-        private readonly string _cacheDirectory;
-        private readonly ConcurrentDictionary<string, CacheItemMetadata> _metadata = new();
-        private readonly SemaphoreSlim _fileLock = new(1, 1);
-        private readonly object _statsLock = new object();
-        private CacheStatistics _statistics = new() { CacheName = "File" };
+        private readonly string _filePath;
+        private readonly ILogger<FileKVCache>? _logger;
+        private Dictionary<string, (object Value, DateTime Expiry)> _cache;
 
         public string Name => "File";
-        public int Count => _metadata.Count;
-        public long Size => _metadata.Values.Sum(m => m.SizeEstimate);
+        public int Count => _cache.Count;
+        public long Size => 0;
 
-        public FileKVCache(ILogger<FileKVCache> logger, string cacheDirectory = "Cache/KV")
+        public FileKVCache(string filePath, ILogger<FileKVCache>? logger = null)
         {
+            _filePath = filePath;
             _logger = logger;
-            _cacheDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, cacheDirectory);
-            if (!Directory.Exists(_cacheDirectory)) Directory.CreateDirectory(_cacheDirectory);
-            LoadMetadata();
+            _cache = LoadCache();
         }
 
-        private string GetFilePath(string key)
+        public Task<T> GetAsync<T>(string key) where T : class
         {
-            var safeKey = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(key))
-                .Replace("/", "_").Replace("=", "").Replace("+", "-");
-            return Path.Combine(_cacheDirectory, $"{safeKey}.cache");
-        }
-
-        private string GetMetaPath(string key) => GetFilePath(key) + ".meta";
-
-        private void LoadMetadata()
-        {
-            try
+            if (_cache.TryGetValue(key, out var entry))
             {
-                var metaFiles = Directory.GetFiles(_cacheDirectory, "*.cache.meta");
-                foreach (var metaFile in metaFiles)
+                if (entry.Expiry > DateTime.UtcNow)
                 {
-                    try
-                    {
-                        var json = File.ReadAllText(metaFile);
-                        var meta = JsonSerializer.Deserialize<CacheItemMetadata>(json);
-                        if (meta != null && meta.Expiry > DateTime.UtcNow)
-                        {
-                            var key = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(metaFile));
-                            _metadata[key] = meta;
-                        }
-                        else
-                        {
-                            File.Delete(metaFile);
-                            var cacheFile = metaFile.Replace(".meta", "");
-                            if (File.Exists(cacheFile)) File.Delete(cacheFile);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning($"Failed to load metadata: {ex.Message}");
-                    }
+                    return Task.FromResult(entry.Value as T);
                 }
-                _logger.LogInformation($"📊 Loaded {_metadata.Count} file cache items");
+                _cache.Remove(key);
+                SaveCache();
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to load file cache metadata");
-            }
+            return Task.FromResult<T>(null);
         }
 
-        public async Task<T> GetAsync<T>(string key) where T : class
+        public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class
         {
-            try
-            {
-                if (!_metadata.TryGetValue(key, out var meta) || meta.Expiry < DateTime.UtcNow)
-                {
-                    lock (_statsLock) _statistics.Misses++;
-                    return null;
-                }
+            var expiry = expiration.HasValue
+                ? DateTime.UtcNow.Add(expiration.Value)
+                : DateTime.UtcNow.AddDays(1);
 
-                var filePath = GetFilePath(key);
-                if (!File.Exists(filePath))
-                {
-                    _metadata.TryRemove(key, out _);
-                    lock (_statsLock) _statistics.Misses++;
-                    return null;
-                }
-
-                await _fileLock.WaitAsync();
-                try
-                {
-                    var json = await File.ReadAllTextAsync(filePath);
-                    var value = JsonSerializer.Deserialize<T>(json);
-
-                    if (value != null)
-                    {
-                        lock (_statsLock) _statistics.Hits++;
-                        meta.AccessCount++;
-                        meta.LastAccessed = DateTime.UtcNow;
-                        return value;
-                    }
-                }
-                finally { _fileLock.Release(); }
-
-                lock (_statsLock) _statistics.Misses++;
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"FileCache Get error: {key}");
-                return null;
-            }
+            _cache[key] = (value, expiry);
+            SaveCache();
+            return Task.CompletedTask;
         }
 
-        public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class
+        public Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null) where T : class
         {
-            try
-            {
-                if (value == null) return;
+            var result = GetAsync<T>(key).Result;
+            if (result != null)
+                return Task.FromResult(result);
 
-                var ttl = expiration ?? TimeSpan.FromDays(7);
-                var filePath = GetFilePath(key);
-                var json = JsonSerializer.Serialize(value);
-
-                await _fileLock.WaitAsync();
-                try
-                {
-                    await File.WriteAllTextAsync(filePath, json);
-
-                    var meta = new CacheItemMetadata
-                    {
-                        Created = DateTime.UtcNow,
-                        LastAccessed = DateTime.UtcNow,
-                        AccessCount = 1,
-                        SizeEstimate = json.Length,
-                        Expiry = DateTime.UtcNow.Add(ttl)
-                    };
-
-                    var metaPath = GetMetaPath(key);
-                    await File.WriteAllTextAsync(metaPath, JsonSerializer.Serialize(meta));
-                    _metadata[key] = meta;
-
-                    lock (_statsLock)
-                    {
-                        _statistics.TotalItems = _metadata.Count;
-                        _statistics.TotalSizeBytes = Size;
-                    }
-                }
-                finally { _fileLock.Release(); }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"FileCache Set error: {key}");
-            }
+            var value = factory().Result;
+            SetAsync(key, value, expiration).Wait();
+            return Task.FromResult(value);
         }
 
-        public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null) where T : class
+        public Task<bool> ExistsAsync(string key)
         {
-            var value = await GetAsync<T>(key);
-            if (value != null) return value;
-
-            value = await factory();
-            if (value != null) await SetAsync(key, value, expiration);
-            return value;
-        }
-
-        public async Task<bool> ExistsAsync(string key)
-        {
-            return await Task.FromResult(_metadata.TryGetValue(key, out var meta) &&
-                meta.Expiry > DateTime.UtcNow &&
-                File.Exists(GetFilePath(key)));
-        }
-
-        public async Task RemoveAsync(string key)
-        {
-            try
+            if (_cache.TryGetValue(key, out var entry))
             {
-                var filePath = GetFilePath(key);
-                if (File.Exists(filePath)) File.Delete(filePath);
-                var metaPath = GetMetaPath(key);
-                if (File.Exists(metaPath)) File.Delete(metaPath);
-                _metadata.TryRemove(key, out _);
-                lock (_statsLock)
-                {
-                    _statistics.TotalItems = _metadata.Count;
-                    _statistics.TotalSizeBytes = Size;
-                }
-                await Task.CompletedTask;
+                if (entry.Expiry > DateTime.UtcNow)
+                    return Task.FromResult(true);
+                _cache.Remove(key);
+                SaveCache();
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"FileCache Remove error: {key}");
-            }
+            return Task.FromResult(false);
         }
 
-        public async Task RemoveByPatternAsync(string pattern)
+        public Task RemoveAsync(string key)
         {
-            var keys = _metadata.Keys.Where(k =>
-                k.Contains(pattern, StringComparison.OrdinalIgnoreCase)).ToList();
-            foreach (var key in keys) await RemoveAsync(key);
+            _cache.Remove(key);
+            SaveCache();
+            return Task.CompletedTask;
         }
 
-        public async Task ClearAsync()
+        public Task RemoveByPatternAsync(string pattern)
         {
-            var files = Directory.GetFiles(_cacheDirectory, "*.*");
-            foreach (var file in files) File.Delete(file);
-            _metadata.Clear();
-            lock (_statsLock)
+            var keysToRemove = new List<string>();
+            foreach (var key in _cache.Keys)
             {
-                _statistics.TotalItems = 0;
-                _statistics.TotalSizeBytes = 0;
+                if (key.Contains(pattern))
+                    keysToRemove.Add(key);
             }
-            await Task.CompletedTask;
+            foreach (var key in keysToRemove)
+            {
+                _cache.Remove(key);
+            }
+            SaveCache();
+            return Task.CompletedTask;
         }
 
-        public async Task<List<string>> GetKeysAsync()
-            => await Task.FromResult(_metadata.Keys.ToList());
+        public Task ClearAsync()
+        {
+            _cache.Clear();
+            SaveCache();
+            return Task.CompletedTask;
+        }
+
+        public Task<List<string>> GetKeysAsync()
+        {
+            return Task.FromResult(new List<string>(_cache.Keys));
+        }
 
         public CacheStatistics GetStatistics()
         {
-            lock (_statsLock)
+            return new CacheStatistics
             {
-                _statistics.TotalItems = _metadata.Count;
-                _statistics.TotalSizeBytes = Size;
-                _statistics.LastUpdated = DateTime.UtcNow;
-                return _statistics;
+                CacheName = "File",
+                TotalItems = _cache.Count,
+                LastUpdated = DateTime.UtcNow
+            };
+        }
+
+        private Dictionary<string, (object Value, DateTime Expiry)> LoadCache()
+        {
+            if (File.Exists(_filePath))
+            {
+                try
+                {
+                    var json = File.ReadAllText(_filePath);
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    };
+                    var data = JsonSerializer.Deserialize<Dictionary<string, FileCacheEntry>>(json, options);
+                    if (data != null)
+                    {
+                        var result = new Dictionary<string, (object Value, DateTime Expiry)>();
+                        foreach (var kvp in data)
+                        {
+                            result[kvp.Key] = (kvp.Value.Value, kvp.Value.Expiry);
+                        }
+                        return result;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Failed to load cache from file");
+                }
             }
+            return new Dictionary<string, (object Value, DateTime Expiry)>();
+        }
+
+        private void SaveCache()
+        {
+            try
+            {
+                var data = new Dictionary<string, FileCacheEntry>();
+                foreach (var kvp in _cache)
+                {
+                    data[kvp.Key] = new FileCacheEntry
+                    {
+                        Value = kvp.Value.Value,
+                        Expiry = kvp.Value.Expiry
+                    };
+                }
+                var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(_filePath, json);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to save cache to file");
+            }
+        }
+
+        private class FileCacheEntry
+        {
+            public object Value { get; set; }
+            public DateTime Expiry { get; set; }
         }
     }
 }

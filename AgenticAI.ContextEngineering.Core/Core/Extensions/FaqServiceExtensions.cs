@@ -33,7 +33,7 @@ namespace AgenticAI.ContextEngineering.Core.Extensions
             services.AddSingleton<HybridSearchEngine>();
 
             // ✅ Register EmbeddingGenerator
-            services.AddSingleton<IEmbeddingGenerator, MockEmbeddingGenerator>();
+            services.AddSingleton<IEmbeddingGenerator, EmbeddingGenerator>();
 
             // ✅ Register FAQ Service
             services.AddSingleton<IFaqService, CachedFaqService>();

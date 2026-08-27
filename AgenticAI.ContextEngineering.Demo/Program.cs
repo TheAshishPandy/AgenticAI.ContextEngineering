@@ -2,13 +2,14 @@
 using AgenticAI.ContextEngineering.Core.Caching;
 using AgenticAI.ContextEngineering.Core.Extensions;
 using AgenticAI.ContextEngineering.Core.Interfaces;
-using AgenticAI.ContextEngineering.Core.Models;
-using AgenticAI.ContextEngineering.Core.Search;
+using AgenticAI.ContextEngineering.Demo.Demos;
 using AgenticAI.ContextEngineering.Demo.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace AgenticAI.ContextEngineering.Demo
@@ -24,155 +25,230 @@ namespace AgenticAI.ContextEngineering.Demo
 
             try
             {
-                // Parse command line args
-                var testToRun = args.Length > 0 ? args[0].ToLower() : "token-cache";
+                var command = args.Length > 0 ? args[0].ToLower() : "all";
 
-                // Build configuration
-                var configuration = new ConfigurationBuilder()
-                    .SetBasePath(AppContext.BaseDirectory)
-                    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                    .AddEnvironmentVariables()
-                    .Build();
+                var configuration = BuildConfiguration();
 
-                // Setup DI
                 var services = new ServiceCollection();
-
-                // Add configuration
                 services.AddSingleton<IConfiguration>(configuration);
 
-                // Add logging
                 services.AddLogging(builder =>
                 {
                     builder.AddConsole();
                     builder.SetMinimumLevel(LogLevel.Warning);
                 });
 
-                // ✅ Register all library services
+                Console.WriteLine("🔧 Building service container...");
                 services.AddContextEngineering(configuration);
 
-                // ✅ Register demo services
-                services.AddScoped<DemoService>();
+                // Register all demo services
+                services.AddScoped<KVCacheDemo>();
+                services.AddScoped<TokenCacheDemo>();
+                services.AddScoped<AIResponseDemo>();
+                services.AddScoped<SearchDemo>();
+                services.AddScoped<FAQDemo>();
+                services.AddScoped<TokenOptimizedDemo>();
+                services.AddScoped<StatisticsDemo>();
+                services.AddScoped<ClearCacheDemo>();
+                services.AddScoped<DemoRunner>();
 
+                Console.WriteLine("🔧 Building service provider...");
                 var serviceProvider = services.BuildServiceProvider();
+                Console.WriteLine("✅ Service provider built successfully!");
 
-                // Print service status
-                PrintServiceStatus(serviceProvider);
+                // Show service status
+                await ShowServiceStatusAsync(serviceProvider);
 
-                // ✅ Run the selected test
-                await RunSelectedTestAsync(serviceProvider, testToRun);
+                // Run demos
+                var runner = serviceProvider.GetService<DemoRunner>();
+                if (runner == null)
+                {
+                    Console.WriteLine("❌ DemoRunner not available");
+                    return;
+                }
+
+                await RunCommandAsync(runner, command);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine($"   Inner: {ex.InnerException.Message}");
-                }
-                Console.WriteLine("Press any key to exit...");
+                Console.WriteLine($"\n❌ FATAL ERROR: {ex.Message}");
+                Console.WriteLine($"   Stack: {ex.StackTrace}");
+                Console.WriteLine("\nPress any key to exit...");
                 Console.ReadKey();
             }
         }
 
-        static void PrintServiceStatus(IServiceProvider serviceProvider)
+        static IConfiguration BuildConfiguration()
         {
-            Console.WriteLine("📋 Service Status:");
-            Console.WriteLine(new string('═', 50));
+            var builder = new ConfigurationBuilder();
 
-            var services = new Dictionary<Type, string>
+            var paths = new[]
             {
-                { typeof(IAIResponseService), "AI Response Service" },
-                { typeof(ITokenCache), "Token Cache" },
-                { typeof(IKVCache), "KV Cache" },
-                { typeof(ISearchService), "Search Service" },
-                { typeof(IFaqService), "FAQ Service" },
-                { typeof(ITokenOptimizedService), "Token Optimized Service" },
-                { typeof(IQdrantClient), "Qdrant Client" }
+                AppContext.BaseDirectory,
+                Directory.GetCurrentDirectory(),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".."),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory),
+                Path.Combine(Directory.GetCurrentDirectory(), "bin", "Debug", "net9.0")
             };
 
-            foreach (var kvp in services)
+            foreach (var path in paths)
+            {
+                var configPath = Path.Combine(path, "appsettings.json");
+                if (File.Exists(configPath))
+                {
+                    Console.WriteLine($"✅ Found appsettings.json at: {configPath}");
+                    builder.AddJsonFile(configPath, optional: false, reloadOnChange: true);
+                    break;
+                }
+            }
+
+            builder.AddEnvironmentVariables();
+            return builder.Build();
+        }
+
+        static async Task ShowServiceStatusAsync(IServiceProvider serviceProvider)
+        {
+            Console.WriteLine("\n📋 Service Status:");
+            Console.WriteLine(new string('═', 60));
+
+            var serviceTypes = new (Type Type, string Name)[]
+            {
+                (typeof(IAIResponseService), "AI Response Service"),
+                (typeof(ITokenCache), "Token Cache"),
+                (typeof(IKVCache), "KV Cache"),
+                (typeof(ISearchService), "Search Service"),
+                (typeof(IFaqService), "FAQ Service"),
+                (typeof(ITokenOptimizedService), "Token Optimized Service"),
+                (typeof(IQdrantClient), "Qdrant Client"),
+                (typeof(IEmbeddingGenerator), "Embedding Generator")
+            };
+
+            foreach (var (type, name) in serviceTypes)
             {
                 try
                 {
-                    var service = serviceProvider.GetService(kvp.Key);
-                    var isRegistered = service != null;
-                    Console.WriteLine($"  {(isRegistered ? "✅" : "❌")} {kvp.Value}: {(isRegistered ? "Registered" : "NOT Available")}");
+                    var service = serviceProvider.GetService(type);
+                    Console.WriteLine($"  {(service != null ? "✅" : "❌")} {name}: {(service != null ? "Registered" : "Not Available")}");
                 }
-                catch
+                catch (Exception ex)
                 {
-                    Console.WriteLine($"  ❌ {kvp.Value}: Error resolving");
+                    Console.WriteLine($"  ❌ {name}: Error - {ex.Message}");
                 }
             }
 
             Console.WriteLine();
         }
 
-        static async Task RunSelectedTestAsync(IServiceProvider serviceProvider, string testToRun)
+        static async Task RunCommandAsync(DemoRunner runner, string command)
         {
-            try
+            Console.WriteLine($"\n🚀 Running: {command.ToUpper()}");
+            Console.WriteLine(new string('═', 60));
+
+            switch (command)
             {
-                var demo = serviceProvider.GetService<DemoService>();
+                case "all":
+                case "complete":
+                    await runner.RunAllDemosAsync();
+                    break;
 
-                if (demo == null)
-                {
-                    Console.WriteLine("❌ DemoService not available");
-                    return;
-                }
+                case "list":
+                case "help":
+                    runner.ListDemos();
+                    ShowHelp();
+                    break;
 
-                Console.WriteLine($"🚀 Running Test: {testToRun.ToUpper()}");
-                Console.WriteLine(new string('═', 50));
+                case "kv":
+                    await runner.RunDemoAsync<KVCacheDemo>();
+                    break;
 
-                switch (testToRun)
-                {
-                    case "token-cache":
-                        await demo.TestAIResponseWithCachingAsync();
-                        break;
+                case "token":
+                    await runner.RunDemoAsync<TokenCacheDemo>();
+                    break;
 
-                    case "token-stats":
-                        await demo.TestTokenCacheStatsAsync();
-                        break;
+                case "ai":
+                    await runner.RunDemoAsync<AIResponseDemo>();
+                    break;
 
-                    case "token-clear":
-                        await demo.TestClearTokenCacheAsync();
-                        break;
+                case "search":
+                    await runner.RunDemoAsync<SearchDemo>();
+                    break;
 
-                    case "token-compare":
-                        await demo.TestCacheComparisonAsync();
-                        break;
+                case "faq":
+                    await runner.RunDemoAsync<FAQDemo>();
+                    break;
 
-                    case "token-optimized":
-                        await demo.TestTokenOptimizedServiceAsync();
-                        break;
+                case "optimized":
+                    await runner.RunDemoAsync<TokenOptimizedDemo>();
+                    break;
 
-                    case "all-token":
-                        await RunAllTokenTestsAsync(demo);
-                        break;
-                    // In Program.cs - add this to the switch
-                    case "kv-test":
-                        await demo.TestKVCacheDirectlyAsync();
-                        break;
-                    default:
-                        Console.WriteLine($"❌ Unknown test: {testToRun}");
-                        Console.WriteLine("   Available tests: token-cache, token-stats, token-clear, token-compare, token-optimized, all-token");
-                        break;
-                }
+                case "stats":
+                    await runner.RunDemoAsync<StatisticsDemo>();
+                    break;
+
+                case "clear":
+                    await runner.RunDemoAsync<ClearCacheDemo>();
+                    break;
+
+                // Legacy commands for backward compatibility
+                case "kv-test":
+                    await runner.RunDemoAsync<KVCacheDemo>();
+                    break;
+
+                case "token-cache":
+                    await runner.RunDemoAsync<AIResponseDemo>();
+                    break;
+
+                case "token-stats":
+                    await runner.RunDemoAsync<StatisticsDemo>();
+                    break;
+
+                case "token-clear":
+                    await runner.RunDemoAsync<ClearCacheDemo>();
+                    break;
+
+                case "token-compare":
+                    await runner.RunDemoAsync<AIResponseDemo>();
+                    break;
+
+                case "token-optimized":
+                    await runner.RunDemoAsync<TokenOptimizedDemo>();
+                    break;
+
+                default:
+                    Console.WriteLine($"❌ Unknown command: {command}");
+                    ShowHelp();
+                    break;
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Test failed: {ex.Message}");
-            }
 
-            Console.WriteLine();
-            Console.WriteLine("✅ Demo completed!");
+            Console.WriteLine("\n✅ Demo completed!");
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
         }
 
-        static async Task RunAllTokenTestsAsync(DemoService demo)
+        static void ShowHelp()
         {
-            await demo.TestAIResponseWithCachingAsync();
-            await demo.TestTokenCacheStatsAsync();
-            await demo.TestCacheComparisonAsync();
-            await demo.TestTokenOptimizedServiceAsync();
+            Console.WriteLine(@"
+╔═══════════════════════════════════════════════════════════════════════╗
+║  📖 AVAILABLE DEMO COMMANDS                                          ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║  all, complete    - Run ALL demos (recommended)                      ║
+║  list, help       - Show available demos                            ║
+║  kv               - KV Cache operations                              ║
+║  token            - Token Cache operations                           ║
+║  ai               - AI Response with caching                         ║
+║  search           - Search Service                                   ║
+║  faq              - FAQ Service                                      ║
+║  optimized        - Token Optimized Service                          ║
+║  stats            - Cache Statistics                                 ║
+║  clear            - Clear all caches                                 ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║  Legacy Commands (backward compatibility):                           ║
+║  kv-test, token-cache, token-stats, token-clear,                    ║
+║  token-compare, token-optimized                                     ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║  Usage: dotnet run -- <command>                                     ║
+║  Example: dotnet run -- all                                         ║
+╚═══════════════════════════════════════════════════════════════════════╝");
         }
     }
 }

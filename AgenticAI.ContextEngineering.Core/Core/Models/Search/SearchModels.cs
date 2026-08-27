@@ -32,33 +32,15 @@ namespace AgenticAI.ContextEngineering.Core.Models
         public bool IncludeScoreBreakdown { get; set; } = true;
     }
 
-    public class SearchResult
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Content { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public string? Source { get; set; }
-        public double Score { get; set; }
-        public double? RerankerScore { get; set; }
-        public Dictionary<string, object> Metadata { get; set; } = new();
-        public ScoreBreakdown? ScoreBreakdown { get; set; }
-    }
-
-    public class ScoreBreakdown
-    {
-        public double LexicalScore { get; set; }
-        public double SemanticScore { get; set; }
-        public double CombinedScore { get; set; }
-        public double? RerankerScore { get; set; }
-        public Dictionary<string, double>? TermScores { get; set; }
-    }
 
     public class SearchResponse
     {
         public List<SearchResult> Results { get; set; } = new();
+        public bool FromCache { get; set; }
+
         public long? TotalCount { get; set; }
         public string? SearchMethod { get; set; }
-        public TimeSpan ProcessingTime { get; set; }
+        public TimeSpan?ProcessingTime { get; set; }
         public Dictionary<string, object> Metadata { get; set; } = new();
         public bool HasResults => Results != null && Results.Count > 0;
     }

@@ -11,7 +11,7 @@ namespace AgenticAI.ContextEngineering.Core.Models
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string Content { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty; public string Description { get; set; }
         public string? Source { get; set; }
         public Dictionary<string, object> Metadata { get; set; } = new();
         public DateTime IndexedAt { get; set; } = DateTime.UtcNow;

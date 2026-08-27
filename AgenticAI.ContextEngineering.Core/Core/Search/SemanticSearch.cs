@@ -1,7 +1,8 @@
-﻿// Core/Search/SemanticSearch.cs (Updated with Qdrant)
+﻿// Core/Search/SemanticSearch.cs
 using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,12 +23,12 @@ namespace AgenticAI.ContextEngineering.Core.Search
             SearchIndex searchIndex,
             IQdrantClient? qdrantClient,
             ILogger<SemanticSearch> logger,
-            SearchOptions options)
+            IOptions<SearchOptions> options)  // ✅ Use IOptions
         {
-            _searchIndex = searchIndex;
+            _searchIndex = searchIndex ?? throw new ArgumentNullException(nameof(searchIndex));
             _qdrantClient = qdrantClient;
-            _logger = logger;
-            _options = options;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _useQdrant = qdrantClient != null;
         }
 
@@ -52,7 +53,6 @@ namespace AgenticAI.ContextEngineering.Core.Search
                     };
                 }
 
-                // ✅ If using Qdrant, search via Qdrant
                 if (_useQdrant && _qdrantClient != null)
                 {
                     _logger.LogDebug("Searching via Qdrant...");
@@ -65,12 +65,10 @@ namespace AgenticAI.ContextEngineering.Core.Search
                         cancellationToken);
 
                     results = qdrantResults;
-
                     _logger.LogDebug($"Qdrant returned {results.Count} results");
                 }
                 else
                 {
-                    // ✅ In-memory search (fallback)
                     _logger.LogDebug("Searching in-memory...");
 
                     var documents = _searchIndex.GetAllDocuments();

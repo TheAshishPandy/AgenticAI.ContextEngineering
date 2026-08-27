@@ -1,4 +1,4 @@
-<!-- AgenticAI.ContextEngineering.Core.csproj -->
+﻿<!-- AgenticAI.ContextEngineering.Core.csproj -->
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
@@ -37,5 +37,15 @@
 		<PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
 		<PackageReference Include="TiktokenSharp" Version="1.2.1" />
 		<PackageReference Include="System.Text.Json" Version="9.0.0" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.SqlServer" Version="9.0.0" />
+		<PackageReference Include="System.Text.Json" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.0" />
+		<PackageReference Include="System.ClientModel" Version="1.2.1" />
+
 	</ItemGroup>
 </Project>

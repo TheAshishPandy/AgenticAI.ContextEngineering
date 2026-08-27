@@ -37,9 +37,7 @@ namespace AgenticAI.ContextEngineering.Core.Evaluation
             {
                 try
                 {
-                    var client = new AzureOpenAIClient(
-                        new Uri(endpoint),
-                        new Azure.AzureKeyCredential(key));
+                    var client = new AzureOpenAIClient(new Uri(endpoint),new Azure.AzureKeyCredential(key));
                     _chatClient = client.GetChatClient(deploymentName);
                     _isEnabled = true;
                     _logger.LogInformation($"LLMAsJudge initialized with model: {deploymentName}");

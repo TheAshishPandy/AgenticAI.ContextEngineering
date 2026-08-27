@@ -1,171 +1,254 @@
 ﻿// Program.cs
+using AgenticAI.ContextEngineering.Core.Caching;
 using AgenticAI.ContextEngineering.Core.Extensions;
 using AgenticAI.ContextEngineering.Core.Interfaces;
-using AgenticAI.ContextEngineering.Core.Models;
-using AgenticAI.ContextEngineering.Core.Search;
+using AgenticAI.ContextEngineering.Demo.Demos;
+using AgenticAI.ContextEngineering.Demo.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SmartChatBot.ContextEngineering.Demo;
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace SmartChatBot.ContextEngineering.Demo
+namespace AgenticAI.ContextEngineering.Demo
 {
     class Program
     {
         static async Task Main(string[] args)
         {
             Console.WriteLine("╔══════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║     AgenticAI ContextEngineering - Search Demo           ║");
+            Console.WriteLine("║     🧪 AgenticAI ContextEngineering - Demo               ║");
             Console.WriteLine("╚══════════════════════════════════════════════════════════╝");
             Console.WriteLine();
 
             try
             {
-                // Build configuration
-                var configuration = new ConfigurationBuilder()
-                    .SetBasePath(AppContext.BaseDirectory)
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                    .AddEnvironmentVariables()
-                    .Build();
+                var command = args.Length > 0 ? args[0].ToLower() : "all";
 
-                // Setup DI
+                var configuration = BuildConfiguration();
+
                 var services = new ServiceCollection();
-
-                // Add configuration
                 services.AddSingleton<IConfiguration>(configuration);
 
-                // Add logging
                 services.AddLogging(builder =>
                 {
                     builder.AddConsole();
-                    builder.SetMinimumLevel(LogLevel.Information);
+                    builder.SetMinimumLevel(LogLevel.Warning);
                 });
 
-                // ✅ Register SearchOptions
-                var searchOptions = new SearchOptions();
-                configuration.GetSection("Search").Bind(searchOptions);
-                services.AddSingleton(searchOptions);
+                Console.WriteLine("🔧 Building service container...");
+                services.AddContextEngineering(configuration);
 
-                // ✅ Register Qdrant Client (optional - if not available, use in-memory)
-                try
-                {
-                    services.AddSingleton<IQdrantClient, QdrantClient>();
-                    Console.WriteLine("✅ Qdrant Client registered");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"⚠️ Qdrant not available: {ex.Message}");
-                    Console.WriteLine("   Using in-memory search instead");
-                }
-
-                // ✅ Register SearchIndex
-                services.AddSingleton<SearchIndex>();
-
-                // ✅ Register search components
-                services.AddScoped<LexicalSearch>();
-                services.AddScoped<SemanticSearch>();
-                services.AddScoped<HybridSearchEngine>();
-
-                // ✅ Register embedding generator (mock for demo)
-                services.AddSingleton<IEmbeddingGenerator, DemoEmbeddingGenerator>();
-
-                // ✅ Register SearchDemo
+                // Register all demo services
+                services.AddScoped<KVCacheDemo>();
+                services.AddScoped<TokenCacheDemo>();
+                services.AddScoped<AIResponseDemo>();
                 services.AddScoped<SearchDemo>();
+                services.AddScoped<FAQDemo>();
+                services.AddScoped<TokenOptimizedDemo>();
+                services.AddScoped<StatisticsDemo>();
+                services.AddScoped<ClearCacheDemo>();
+                services.AddScoped<DemoRunner>();
 
+                Console.WriteLine("🔧 Building service provider...");
                 var serviceProvider = services.BuildServiceProvider();
+                Console.WriteLine("✅ Service provider built successfully!");
 
-                // ✅ Verify services are registered
-                var qdrantClient = serviceProvider.GetService<IQdrantClient>();
-                var searchIndex = serviceProvider.GetService<SearchIndex>();
-                var hybridSearch = serviceProvider.GetService<HybridSearchEngine>();
-                var lexicalSearch = serviceProvider.GetService<LexicalSearch>();
-                var semanticSearch = serviceProvider.GetService<SemanticSearch>();
-                var embeddingGen = serviceProvider.GetService<IEmbeddingGenerator>();
+                // Show service status
+                await ShowServiceStatusAsync(serviceProvider);
 
-                Console.WriteLine($"✅ IQdrantClient: {(qdrantClient != null ? "Registered" : "Not Available")}");
-                Console.WriteLine($"✅ SearchIndex: {(searchIndex != null ? "Registered" : "NULL")}");
-                Console.WriteLine($"✅ HybridSearchEngine: {(hybridSearch != null ? "Registered" : "NULL")}");
-                Console.WriteLine($"✅ LexicalSearch: {(lexicalSearch != null ? "Registered" : "NULL")}");
-                Console.WriteLine($"✅ SemanticSearch: {(semanticSearch != null ? "Registered" : "NULL")}");
-                Console.WriteLine($"✅ IEmbeddingGenerator: {(embeddingGen != null ? "Registered" : "NULL")}");
-                Console.WriteLine();
-
-                // ✅ Check if Qdrant collection exists
-                if (qdrantClient != null)
+                // Run demos
+                var runner = serviceProvider.GetService<DemoRunner>();
+                if (runner == null)
                 {
-                    try
-                    {
-                        var collectionExists = await qdrantClient.CollectionExistsAsync();
-                        if (!collectionExists)
-                        {
-                            Console.WriteLine("📝 Creating Qdrant collection...");
-                            await qdrantClient.CreateCollectionAsync(1536);
-                            Console.WriteLine("✅ Qdrant collection created");
-                        }
-
-                        var size = await qdrantClient.GetCollectionSizeAsync();
-                        Console.WriteLine($"📊 Qdrant collection has {size} documents");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"⚠️ Qdrant error: {ex.Message}");
-                        Console.WriteLine("   Using in-memory search instead");
-                    }
+                    Console.WriteLine("❌ DemoRunner not available");
+                    return;
                 }
 
-                Console.WriteLine();
-
-                // ✅ Run the demo
-                var demo = serviceProvider.GetRequiredService<SearchDemo>();
-                await demo.RunAsync();
+                await RunCommandAsync(runner, command);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Fatal Error: {ex.Message}");
-                Console.WriteLine($"   StackTrace: {ex.StackTrace}");
-                Console.WriteLine();
-                Console.WriteLine("Press any key to exit...");
+                Console.WriteLine($"\n❌ FATAL ERROR: {ex.Message}");
+                Console.WriteLine($"   Stack: {ex.StackTrace}");
+                Console.WriteLine("\nPress any key to exit...");
                 Console.ReadKey();
             }
         }
-    }
 
-    // ✅ Mock Embedding Generator for Demo
-    public class DemoEmbeddingGenerator : IEmbeddingGenerator
-    {
-        private readonly Random _random = new Random();
-        public int Dimensions => 1536;  // ✅ Changed from 384 to 1536
-        public bool IsEnabled => true;
-
-        public Task<float[]> GenerateEmbeddingAsync(string text, CancellationToken cancellationToken = default)
+        static IConfiguration BuildConfiguration()
         {
-            var embedding = new float[1536];  // ✅ Changed from 384 to 1536
-            for (int i = 0; i < embedding.Length; i++)
+            var builder = new ConfigurationBuilder();
+
+            var paths = new[]
             {
-                embedding[i] = (float)(_random.NextDouble() * 2 - 1);
-            }
-            // Normalize
-            var norm = MathF.Sqrt(embedding.Sum(x => x * x));
-            for (int i = 0; i < embedding.Length; i++)
+                AppContext.BaseDirectory,
+                Directory.GetCurrentDirectory(),
+                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".."),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory),
+                Path.Combine(Directory.GetCurrentDirectory(), "bin", "Debug", "net9.0")
+            };
+
+            foreach (var path in paths)
             {
-                embedding[i] /= norm;
+                var configPath = Path.Combine(path, "appsettings.json");
+                if (File.Exists(configPath))
+                {
+                    Console.WriteLine($"✅ Found appsettings.json at: {configPath}");
+                    builder.AddJsonFile(configPath, optional: false, reloadOnChange: true);
+                    break;
+                }
             }
-            return Task.FromResult(embedding);
+
+            builder.AddEnvironmentVariables();
+            return builder.Build();
         }
 
-        public Task<List<float[]>> GenerateEmbeddingsAsync(List<string> texts, CancellationToken cancellationToken = default)
+        static async Task ShowServiceStatusAsync(IServiceProvider serviceProvider)
         {
-            var results = new List<float[]>();
-            foreach (var text in texts)
+            Console.WriteLine("\n📋 Service Status:");
+            Console.WriteLine(new string('═', 60));
+
+            var serviceTypes = new (Type Type, string Name)[]
             {
-                results.Add(GenerateEmbeddingAsync(text, cancellationToken).Result);
+                (typeof(IAIResponseService), "AI Response Service"),
+                (typeof(ITokenCache), "Token Cache"),
+                (typeof(IKVCache), "KV Cache"),
+                (typeof(ISearchService), "Search Service"),
+                (typeof(IFaqService), "FAQ Service"),
+                (typeof(ITokenOptimizedService), "Token Optimized Service"),
+                (typeof(IQdrantClient), "Qdrant Client"),
+                (typeof(IEmbeddingGenerator), "Embedding Generator")
+            };
+
+            foreach (var (type, name) in serviceTypes)
+            {
+                try
+                {
+                    var service = serviceProvider.GetService(type);
+                    Console.WriteLine($"  {(service != null ? "✅" : "❌")} {name}: {(service != null ? "Registered" : "Not Available")}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"  ❌ {name}: Error - {ex.Message}");
+                }
             }
-            return Task.FromResult(results);
+
+            Console.WriteLine();
+        }
+
+        static async Task RunCommandAsync(DemoRunner runner, string command)
+        {
+            Console.WriteLine($"\n🚀 Running: {command.ToUpper()}");
+            Console.WriteLine(new string('═', 60));
+
+            switch (command)
+            {
+                case "all":
+                case "complete":
+                    await runner.RunAllDemosAsync();
+                    break;
+
+                case "list":
+                case "help":
+                    runner.ListDemos();
+                    ShowHelp();
+                    break;
+
+                case "kv":
+                    await runner.RunDemoAsync<KVCacheDemo>();
+                    break;
+
+                case "token":
+                    await runner.RunDemoAsync<TokenCacheDemo>();
+                    break;
+
+                case "ai":
+                    await runner.RunDemoAsync<AIResponseDemo>();
+                    break;
+
+                case "search":
+                    await runner.RunDemoAsync<SearchDemo>();
+                    break;
+
+                case "faq":
+                    await runner.RunDemoAsync<FAQDemo>();
+                    break;
+
+                case "optimized":
+                    await runner.RunDemoAsync<TokenOptimizedDemo>();
+                    break;
+
+                case "stats":
+                    await runner.RunDemoAsync<StatisticsDemo>();
+                    break;
+
+                case "clear":
+                    await runner.RunDemoAsync<ClearCacheDemo>();
+                    break;
+
+                // Legacy commands for backward compatibility
+                case "kv-test":
+                    await runner.RunDemoAsync<KVCacheDemo>();
+                    break;
+
+                case "token-cache":
+                    await runner.RunDemoAsync<AIResponseDemo>();
+                    break;
+
+                case "token-stats":
+                    await runner.RunDemoAsync<StatisticsDemo>();
+                    break;
+
+                case "token-clear":
+                    await runner.RunDemoAsync<ClearCacheDemo>();
+                    break;
+
+                case "token-compare":
+                    await runner.RunDemoAsync<AIResponseDemo>();
+                    break;
+
+                case "token-optimized":
+                    await runner.RunDemoAsync<TokenOptimizedDemo>();
+                    break;
+
+                default:
+                    Console.WriteLine($"❌ Unknown command: {command}");
+                    ShowHelp();
+                    break;
+            }
+
+            Console.WriteLine("\n✅ Demo completed!");
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
+        }
+
+        static void ShowHelp()
+        {
+            Console.WriteLine(@"
+╔═══════════════════════════════════════════════════════════════════════╗
+║  📖 AVAILABLE DEMO COMMANDS                                          ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║  all, complete    - Run ALL demos (recommended)                      ║
+║  list, help       - Show available demos                            ║
+║  kv               - KV Cache operations                              ║
+║  token            - Token Cache operations                           ║
+║  ai               - AI Response with caching                         ║
+║  search           - Search Service                                   ║
+║  faq              - FAQ Service                                      ║
+║  optimized        - Token Optimized Service                          ║
+║  stats            - Cache Statistics                                 ║
+║  clear            - Clear all caches                                 ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║  Legacy Commands (backward compatibility):                           ║
+║  kv-test, token-cache, token-stats, token-clear,                    ║
+║  token-compare, token-optimized                                     ║
+╠═══════════════════════════════════════════════════════════════════════╣
+║  Usage: dotnet run -- <command>                                     ║
+║  Example: dotnet run -- all                                         ║
+╚═══════════════════════════════════════════════════════════════════════╝");
         }
     }
 }

@@ -27,7 +27,7 @@ namespace AgenticAI.ContextEngineering.Demo.Demos
             Console.WriteLine("\n🗑️ CLEAR CACHE DEMO");
             Console.WriteLine(new string('─', 60));
 
-            if (!IsConfigured)
+            if (!IsConfigured)  
             {
                 Console.WriteLine("  ❌ Caches not registered");
                 return;

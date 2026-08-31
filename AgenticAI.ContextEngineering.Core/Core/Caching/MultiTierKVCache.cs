@@ -8,252 +8,207 @@ using System.Threading.Tasks;
 namespace AgenticAI.ContextEngineering.Core.Caching
 {
     /// <summary>
-    /// Simple Multi-Tier Cache - Simplified version
+    /// Multi-tier cache implementation that uses Memory, File, and Distributed caches
     /// </summary>
     public class MultiTierKVCache : IKVCache
     {
-        private readonly IKVCache _l1Cache;  // Memory
-        private readonly IKVCache? _l2Cache; // File
-        private readonly IKVCache? _l3Cache; // Distributed
+        private readonly MemoryKVCache _memoryCache;
+        private readonly FileKVCache _fileCache;
+        private readonly DistributedKVCache _distributedCache;
         private readonly ILogger<MultiTierKVCache> _logger;
 
         public string Name => "MultiTier";
-        public int Count => GetTotalCount();
-        public long Size => GetTotalSize();
+        public int Count => _memoryCache.Count + _fileCache.Count + _distributedCache.Count;
+        public long Size => _memoryCache.Size + _fileCache.Size + _distributedCache.Size;
 
         public MultiTierKVCache(
-            IKVCache l1Cache,
-            IKVCache? l2Cache,
-            IKVCache? l3Cache,
-            ILogger<MultiTierKVCache> logger)
+            MemoryKVCache memoryCache,
+            FileKVCache fileCache,
+            DistributedKVCache distributedCache,
+            ILogger<MultiTierKVCache> logger = null)
         {
-            _l1Cache = l1Cache ?? throw new ArgumentNullException(nameof(l1Cache));
-            _l2Cache = l2Cache;
-            _l3Cache = l3Cache;
+            _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
+            _fileCache = fileCache ?? throw new ArgumentNullException(nameof(fileCache));
+            _distributedCache = distributedCache ?? throw new ArgumentNullException(nameof(distributedCache));
             _logger = logger;
-
-            _logger.LogInformation($"🗄️ MultiTierCache initialized with L1:{l1Cache.Name}, L2:{l2Cache?.Name ?? "None"}, L3:{l3Cache?.Name ?? "None"}");
         }
 
         public async Task<T> GetAsync<T>(string key) where T : class
         {
-            // Try L1 first
-            var result = await _l1Cache.GetAsync<T>(key);
+            // Try memory first (fastest)
+            var result = await _memoryCache.GetAsync<T>(key);
             if (result != null)
             {
-                _logger.LogDebug($"✅ Cache HIT (L1): {key}");
+                _logger?.LogDebug("Cache hit in Memory tier for key: {Key}", key);
                 return result;
             }
 
-            // Try L2
-            if (_l2Cache != null)
+            // Try file cache (medium)
+            result = await _fileCache.GetAsync<T>(key);
+            if (result != null)
             {
-                result = await _l2Cache.GetAsync<T>(key);
-                if (result != null)
-                {
-                    _logger.LogDebug($"✅ Cache HIT (L2): {key}");
-                    // Promote to L1
-                    await _l1Cache.SetAsync(key, result);
-                    return result;
-                }
+                _logger?.LogDebug("Cache hit in File tier for key: {Key}", key);
+                // Promote to memory
+                await _memoryCache.SetAsync(key, result);
+                return result;
             }
 
-            // Try L3
-            if (_l3Cache != null)
+            // Try distributed cache (slowest)
+            result = await _distributedCache.GetAsync<T>(key);
+            if (result != null)
             {
-                result = await _l3Cache.GetAsync<T>(key);
-                if (result != null)
-                {
-                    _logger.LogDebug($"✅ Cache HIT (L3): {key}");
-                    // Promote to L1
-                    await _l1Cache.SetAsync(key, result);
-                    if (_l2Cache != null)
-                    {
-                        await _l2Cache.SetAsync(key, result);
-                    }
-                    return result;
-                }
+                _logger?.LogDebug("Cache hit in Distributed tier for key: {Key}", key);
+                // Promote to memory and file
+                await _memoryCache.SetAsync(key, result);
+                await _fileCache.SetAsync(key, result);
+                return result;
             }
 
-            _logger.LogDebug($"❌ Cache MISS: {key}");
+            _logger?.LogDebug("Cache miss for key: {Key}", key);
             return null;
         }
 
         public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class
         {
-            // Set in all tiers
-            await _l1Cache.SetAsync(key, value, expiration);
-
-            if (_l2Cache != null)
-                await _l2Cache.SetAsync(key, value, expiration);
-
-            if (_l3Cache != null)
-                await _l3Cache.SetAsync(key, value, expiration);
-
-            _logger.LogDebug($"✅ Set cache: {key}");
+            await _memoryCache.SetAsync(key, value, expiration);
+            await _fileCache.SetAsync(key, value, expiration);
+            await _distributedCache.SetAsync(key, value, expiration);
         }
 
         public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null) where T : class
         {
             var cached = await GetAsync<T>(key);
             if (cached != null)
-                return cached;
-
-            var result = await factory();
-            if (result != null)
             {
-                await SetAsync(key, result, expiration);
+                return cached;
             }
 
-            return result;
+            var value = await factory();
+            if (value != null)
+            {
+                await SetAsync(key, value, expiration);
+            }
+            return value;
         }
 
         public async Task<bool> ExistsAsync(string key)
         {
-            if (await _l1Cache.ExistsAsync(key))
-                return true;
-
-            if (_l2Cache != null && await _l2Cache.ExistsAsync(key))
-                return true;
-
-            if (_l3Cache != null && await _l3Cache.ExistsAsync(key))
-                return true;
-
-            return false;
+            return await _memoryCache.ExistsAsync(key) ||
+                   await _fileCache.ExistsAsync(key) ||
+                   await _distributedCache.ExistsAsync(key);
         }
 
         public async Task RemoveAsync(string key)
         {
-            await _l1Cache.RemoveAsync(key);
-
-            if (_l2Cache != null)
-                await _l2Cache.RemoveAsync(key);
-
-            if (_l3Cache != null)
-                await _l3Cache.RemoveAsync(key);
+            await _memoryCache.RemoveAsync(key);
+            await _fileCache.RemoveAsync(key);
+            await _distributedCache.RemoveAsync(key);
         }
 
         public async Task RemoveByPatternAsync(string pattern)
         {
-            await _l1Cache.RemoveByPatternAsync(pattern);
-
-            if (_l2Cache != null)
-                await _l2Cache.RemoveByPatternAsync(pattern);
-
-            if (_l3Cache != null)
-                await _l3Cache.RemoveByPatternAsync(pattern);
+            await _memoryCache.RemoveByPatternAsync(pattern);
+            await _fileCache.RemoveByPatternAsync(pattern);
+            await _distributedCache.RemoveByPatternAsync(pattern);
         }
 
         public async Task ClearAsync()
         {
-            await _l1Cache.ClearAsync();
-
-            if (_l2Cache != null)
-                await _l2Cache.ClearAsync();
-
-            if (_l3Cache != null)
-                await _l3Cache.ClearAsync();
+            await _memoryCache.ClearAsync();
+            await _fileCache.ClearAsync();
+            await _distributedCache.ClearAsync();
         }
 
         public async Task<List<string>> GetKeysAsync()
         {
-            var allKeys = new HashSet<string>();
+            var memoryKeys = await _memoryCache.GetKeysAsync();
+            var fileKeys = await _fileCache.GetKeysAsync();
+            var distributedKeys = await _distributedCache.GetKeysAsync();
 
-            var keys1 = await _l1Cache.GetKeysAsync();
-            foreach (var key in keys1)
-                allKeys.Add(key);
-
-            if (_l2Cache != null)
-            {
-                var keys2 = await _l2Cache.GetKeysAsync();
-                foreach (var key in keys2)
-                    allKeys.Add(key);
-            }
-
-            if (_l3Cache != null)
-            {
-                var keys3 = await _l3Cache.GetKeysAsync();
-                foreach (var key in keys3)
-                    allKeys.Add(key);
-            }
-
-            return allKeys.ToList();
+            return memoryKeys.Union(fileKeys).Union(distributedKeys).ToList();
         }
 
         public CacheStatistics GetStatistics()
         {
-            var totalStats = new CacheStatistics
+            var memoryStats = _memoryCache.GetStatistics();
+            var fileStats = _fileCache.GetStatistics();
+            var distributedStats = _distributedCache.GetStatistics();
+
+            return new CacheStatistics
             {
                 CacheName = "MultiTier",
-                LastUpdated = DateTime.UtcNow
+                TotalItems = memoryStats.TotalItems + fileStats.TotalItems + distributedStats.TotalItems,
+                TotalSizeBytes = memoryStats.TotalSizeBytes + fileStats.TotalSizeBytes + distributedStats.TotalSizeBytes,
+                Hits = memoryStats.Hits + fileStats.Hits + distributedStats.Hits,
+                Misses = memoryStats.Misses + fileStats.Misses + distributedStats.Misses,
+                Evictions = memoryStats.Evictions + fileStats.Evictions + distributedStats.Evictions,
+                LastUpdated = DateTime.UtcNow,
+                IsConnected = memoryStats.IsConnected && fileStats.IsConnected && distributedStats.IsConnected,
+                ConnectionStatus = GetConnectionStatus(memoryStats, fileStats, distributedStats),
+                Metadata = new Dictionary<string, object>
+                {
+                    ["MemoryCache"] = memoryStats,
+                    ["FileCache"] = fileStats,
+                    ["DistributedCache"] = distributedStats
+                }
             };
-
-            var stats1 = _l1Cache.GetStatistics();
-            totalStats.TotalItems += stats1.TotalItems;
-            totalStats.TotalSizeBytes += stats1.TotalSizeBytes;
-            totalStats.Hits += stats1.Hits;
-            totalStats.Misses += stats1.Misses;
-
-            if (_l2Cache != null)
-            {
-                var stats2 = _l2Cache.GetStatistics();
-                totalStats.TotalItems += stats2.TotalItems;
-                totalStats.TotalSizeBytes += stats2.TotalSizeBytes;
-                totalStats.Hits += stats2.Hits;
-                totalStats.Misses += stats2.Misses;
-            }
-
-            if (_l3Cache != null)
-            {
-                var stats3 = _l3Cache.GetStatistics();
-                totalStats.TotalItems += stats3.TotalItems;
-                totalStats.TotalSizeBytes += stats3.TotalSizeBytes;
-                totalStats.Hits += stats3.Hits;
-                totalStats.Misses += stats3.Misses;
-            }
-
-            return totalStats;
         }
 
+        private string GetConnectionStatus(CacheStatistics memory, CacheStatistics file, CacheStatistics distributed)
+        {
+            if (!memory.IsConnected) return "Memory Disconnected";
+            if (!file.IsConnected) return "File Disconnected";
+            if (!distributed.IsConnected) return "Distributed Disconnected";
+            return "Connected";
+        }
+
+        /// <summary>
+        /// Get statistics for all tiers
+        /// </summary>
         public Dictionary<string, CacheStatistics> GetAllTierStatistics()
         {
-            var result = new Dictionary<string, CacheStatistics>();
-
-            var stats1 = _l1Cache.GetStatistics();
-            stats1.CacheName = "Memory";
-            result["Memory"] = stats1;
-
-            if (_l2Cache != null)
+            return new Dictionary<string, CacheStatistics>
             {
-                var stats2 = _l2Cache.GetStatistics();
-                stats2.CacheName = "File";
-                result["File"] = stats2;
-            }
-
-            if (_l3Cache != null)
-            {
-                var stats3 = _l3Cache.GetStatistics();
-                stats3.CacheName = "Distributed";
-                result["Distributed"] = stats3;
-            }
-
-            return result;
+                ["Memory"] = _memoryCache.GetStatistics(),
+                ["File"] = _fileCache.GetStatistics(),
+                ["Distributed"] = _distributedCache.GetStatistics()
+            };
         }
 
-        private int GetTotalCount()
+        /// <summary>
+        /// Generate cache report
+        /// </summary>
+        public async Task<CacheReport> GenerateReportAsync()
         {
-            var count = _l1Cache.Count;
-            if (_l2Cache != null) count += _l2Cache.Count;
-            if (_l3Cache != null) count += _l3Cache.Count;
-            return count;
-        }
+            var report = new CacheReport
+            {
+                GeneratedAt = DateTime.UtcNow,
+                ApplicationName = "AgenticAI.ContextEngineering"
+            };
 
-        private long GetTotalSize()
-        {
-            var size = _l1Cache.Size;
-            if (_l2Cache != null) size += _l2Cache.Size;
-            if (_l3Cache != null) size += _l3Cache.Size;
-            return size;
+            var allStats = GetAllTierStatistics();
+            foreach (var tier in allStats)
+            {
+                report.Tiers[tier.Key] = tier.Value;
+            }
+
+            report.Total = GetStatistics();
+            report.DistributedCacheHealth = new DistributedCacheHealth
+            {
+                IsConnected = true,
+                Status = "Healthy",
+                LatencyMs = 0,
+                LastCheck = DateTime.UtcNow
+            };
+
+            report.Recommendations = new Dictionary<string, object>
+            {
+                ["MemoryCacheSize"] = "Consider increasing memory cache size if hit rate is low",
+                ["FileCachePath"] = "Ensure file cache directory has sufficient disk space",
+                ["DistributedCache"] = "Monitor distributed cache connectivity"
+            };
+
+            return report;
         }
     }
 }

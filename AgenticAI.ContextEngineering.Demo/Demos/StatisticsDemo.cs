@@ -1,7 +1,9 @@
 ﻿// AgenticAI.ContextEngineering.Demo/Demos/StatisticsDemo.cs
 using AgenticAI.ContextEngineering.Core.Caching;
 using AgenticAI.ContextEngineering.Core.Interfaces;
+using AgenticAI.ContextEngineering.Core.Services;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace AgenticAI.ContextEngineering.Demo.Demos
@@ -10,16 +12,24 @@ namespace AgenticAI.ContextEngineering.Demo.Demos
     {
         private readonly ITokenCache _tokenCache;
         private readonly IKVCache _kvCache;
+        private readonly ITokenUsageTracker _tokenUsageTracker;
+        private readonly IAIResponseService _aiResponseService;
 
         public string Name => "Statistics Demo";
-        public string Description => "Shows cache statistics for Token and KV caches";
+        public string Description => "Shows cache statistics for Token and KV caches with per-call token observability";
         public bool IsConfigured => _tokenCache != null && _kvCache != null;
         public string ConfigurationStatus => _tokenCache != null && _kvCache != null ? "✅ Configured" : "❌ Not Configured";
 
-        public StatisticsDemo(ITokenCache tokenCache, IKVCache kvCache)
+        public StatisticsDemo(
+            ITokenCache tokenCache,
+            IKVCache kvCache,
+            ITokenUsageTracker tokenUsageTracker = null,
+            IAIResponseService aiResponseService = null)
         {
             _tokenCache = tokenCache;
             _kvCache = kvCache;
+            _tokenUsageTracker = tokenUsageTracker;
+            _aiResponseService = aiResponseService;
         }
 
         public async Task RunAsync()
@@ -43,6 +53,18 @@ namespace AgenticAI.ContextEngineering.Demo.Demos
 
                 // Multi-Tier Statistics
                 await ShowMultiTierStatsAsync();
+
+                // Per-Call Token Usage Details
+                if (_tokenUsageTracker != null)
+                {
+                    await ShowDetailedTokenUsageAsync();
+                }
+
+                // AI Service Token Statistics (if available)
+                if (_aiResponseService != null)
+                {
+                    await ShowAIServiceTokenStatsAsync();
+                }
 
                 // Generate Report
                 await ShowReportAsync();
@@ -103,6 +125,100 @@ namespace AgenticAI.ContextEngineering.Demo.Demos
             else
             {
                 Console.WriteLine($"     Not a MultiTier cache (Type: {_kvCache.GetType().Name})");
+            }
+        }
+
+        private async Task ShowDetailedTokenUsageAsync()
+        {
+            Console.WriteLine("\n  📊 PER-CALL TOKEN USAGE DETAILS:");
+            Console.WriteLine(new string('─', 90));
+
+            var recentOps = await _tokenUsageTracker.GetRecentOperationsAsync(20);
+
+            if (!recentOps.Any())
+            {
+                Console.WriteLine("     ℹ️ No token usage records found. Make some AI calls first.");
+                return;
+            }
+
+           // Console.WriteLine($"  {'Time',-12} {'Division',-12} {'Tokens',-14} {'Cost',-14} {'Cache',-12} {'Time(ms)',-10} {'Confidence',-10}");
+            Console.WriteLine(new string('─', 105));
+
+            foreach (var op in recentOps.OrderByDescending(o => o.Timestamp).Take(15))
+            {
+                var timestamp = op.Timestamp.ToLocalTime().ToString("HH:mm:ss");
+                var cacheStatus = op.FromCache ? $"✅ {op.CacheLevel}" : "❌ Generated";
+                var division = op.Division ?? "N/A";
+
+                Console.WriteLine(
+                    $"  {timestamp,-12} " +
+                    $"{division[..Math.Min(11, division.Length)],-12} " +
+                    $"{op.TotalTokens,-14:N0} " +
+                    $"${op.EstimatedCost,-14:F6} " +
+                    $"{cacheStatus,-12} " +
+                    $"{op.ResponseTimeMs,-10}ms " +
+                    $"{op.Confidence,-10:F1}%"
+                );
+
+                if (!string.IsNullOrEmpty(op.Query))
+                {
+                    var queryPreview = op.Query.Length > 60 ?
+                        op.Query[..60] + "..." :
+                        op.Query;
+                    Console.WriteLine($"     └─ \"{queryPreview}\"");
+                }
+            }
+
+            // Get summary
+            var summary = await _tokenUsageTracker.GetSummaryAsync(DateTime.UtcNow.AddMinutes(-30), DateTime.UtcNow);
+
+            if (summary.TotalCalls > 0)
+            {
+                Console.WriteLine($"\n  📈 Quick Summary (last 30 minutes):");
+                Console.WriteLine($"     Total Calls: {summary.TotalCalls:N0}");
+                Console.WriteLine($"     Cache Hit Rate: {summary.HitRate:F1}%");
+                Console.WriteLine($"     Total Tokens: {summary.TotalTokens:N0}");
+                Console.WriteLine($"     Total Cost: ${summary.TotalCost:F6}");
+                Console.WriteLine($"     Avg Response: {summary.AverageResponseTimeMs}ms");
+
+                if (summary.TokensByModel.Any())
+                {
+                    Console.WriteLine($"\n     Tokens by Model:");
+                    foreach (var model in summary.TokensByModel.OrderByDescending(kv => kv.Value).Take(3))
+                    {
+                        Console.WriteLine($"       • {model.Key}: {model.Value:N0} tokens");
+                    }
+                }
+
+                if (summary.TokensByDivision.Any())
+                {
+                    Console.WriteLine($"\n     Tokens by Division:");
+                    foreach (var div in summary.TokensByDivision.OrderByDescending(kv => kv.Value).Take(3))
+                    {
+                        Console.WriteLine($"       • {div.Key}: {div.Value:N0} tokens");
+                    }
+                }
+            }
+        }
+
+        private async Task ShowAIServiceTokenStatsAsync()
+        {
+            Console.WriteLine("\n  📊 AI Service Token Statistics:");
+
+            try
+            {
+                var tokenStats = _aiResponseService.GetTokenStats();
+                Console.WriteLine($"     Total Tokens Cached: {tokenStats.TotalTokensCached:N0}");
+                Console.WriteLine($"     Total Tokens Saved: {tokenStats.TotalTokensSaved:N0}");
+                Console.WriteLine($"     Cache Hit Rate: {tokenStats.CacheHitRate:F1}%");
+                Console.WriteLine($"     Cache Hits: {tokenStats.CacheHits:N0}");
+                Console.WriteLine($"     Cache Misses: {tokenStats.CacheMisses:N0}");
+                Console.WriteLine($"     Cost Saved: ${tokenStats.TotalCostSaved:F6}");
+                Console.WriteLine($"     Cache Entries: {tokenStats.CacheEntryCount:N0}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"     ⚠️ Could not get AI service token stats: {ex.Message}");
             }
         }
 

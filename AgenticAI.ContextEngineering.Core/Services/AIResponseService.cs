@@ -86,7 +86,6 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     _logger.LogDebug($"Using mock response for: {request.UserQuery}");
                     var mockResponse = GenerateMockResponse(request.UserQuery);
 
-                    // Simulate processing delay
                     await Task.Delay(100, cancellationToken);
 
                     return new AIResponseResult
@@ -106,13 +105,52 @@ namespace AgenticAI.ContextEngineering.Core.Services
 
                 _logger.LogDebug("Generating response for: {Query}", request.UserQuery);
 
-
+                // ============================================================
+                // STEP 1: Build messages with CORRECT priority order
+                // ============================================================
                 var messages = new List<OpenAI.Chat.ChatMessage>();
 
-                var systemPrompt = BuildSystemPrompt(request);
-                messages.Add(new SystemChatMessage(systemPrompt));
+                // ============================================================
+                // PRIORITY 1: USER CONTEXT (HIGHEST PRIORITY)
+                // User details, Division, UserId, ConversationId, Language
+                // ============================================================
+                var userContextPrompt = BuildUserContextPrompt(request);
+                if (!string.IsNullOrEmpty(userContextPrompt))
+                {
+                    messages.Add(new SystemChatMessage(userContextPrompt));
+                }
 
-  
+                // ============================================================
+                // PRIORITY 2: DYNAMIC DATA (ModuleData - Second Highest)
+                // Knowledge Base, API responses, user-specific data
+                // ============================================================
+                var dynamicDataPrompt = BuildDynamicDataPrompt(request.ModuleData);
+                if (!string.IsNullOrEmpty(dynamicDataPrompt))
+                {
+                    messages.Add(new SystemChatMessage(dynamicDataPrompt));
+                }
+
+                // ============================================================
+                // PRIORITY 3: SYSTEM PROMPT / KNOWLEDGE BASE (Third Priority)
+                // System instructions define how to respond
+                // ============================================================
+                var systemPrompt = BuildSystemPromptWithPriority(request);
+                if (!string.IsNullOrEmpty(systemPrompt))
+                {
+                    messages.Add(new SystemChatMessage(systemPrompt));
+                }
+
+                // ============================================================
+                // PRIORITY 4: USER QUERY (Fourth Priority)
+                // The user's current query
+                // ============================================================
+                var userQuery = request.UserQuery ?? string.Empty;
+                messages.Add(new UserChatMessage(userQuery));
+
+                // ============================================================
+                // PRIORITY 5: CONVERSATION HISTORY (Lowest Priority)
+                // Previous messages for context and follow-ups
+                // ============================================================
                 if (request.ConversationHistory?.Any() == true)
                 {
                     foreach (var msg in request.ConversationHistory.TakeLast(10))
@@ -124,9 +162,9 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     }
                 }
 
-                // 3. Add current user query
-                messages.Add(new UserChatMessage(request.UserQuery));
-
+                // ============================================================
+                // STEP 7: Generate AI Response
+                // ============================================================
                 var response = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
                 var completion = response.Value;
 
@@ -160,6 +198,164 @@ namespace AgenticAI.ContextEngineering.Core.Services
             }
         }
 
+        /// <summary>
+        /// Build User Context Prompt (HIGHEST PRIORITY)
+        /// </summary>
+        private string BuildUserContextPrompt(AIResponseRequest request)
+        {
+            var contextParts = new List<string>();
+
+            // ============================================================
+            // 1. USER ID
+            // ============================================================
+            if (!string.IsNullOrEmpty(request.UserId))
+            {
+                contextParts.Add($"👤 User ID: {request.UserId}");
+            }
+
+            // ============================================================
+            // 2. CONVERSATION ID
+            // ============================================================
+            if (!string.IsNullOrEmpty(request.ConversationId))
+            {
+                contextParts.Add($"💬 Conversation ID: {request.ConversationId}");
+            }
+
+            // ============================================================
+            // 3. DIVISION
+            // ============================================================
+            if (!string.IsNullOrEmpty(request.Division))
+            {
+                contextParts.Add($"🏢 Division: {request.Division}");
+            }
+
+            // ============================================================
+            // 4. USER LANGUAGE
+            // ============================================================
+            if (request.ModuleData != null && request.ModuleData.TryGetValue("UserLanguage", out var language))
+            {
+                contextParts.Add($"🌐 User Language: {language}");
+            }
+
+            // ============================================================
+            // 5. AUTHENTICATION STATUS
+            // ============================================================
+            if (request.ModuleData != null && request.ModuleData.TryGetValue("IsAuthenticated", out var isAuth))
+            {
+                contextParts.Add($"🔐 Authenticated: {isAuth}");
+            }
+
+            if (!contextParts.Any())
+                return string.Empty;
+
+            return $@"
+╔═══════════════════════════════════════════════════════════════╗
+║              👤 USER CONTEXT (HIGHEST PRIORITY)               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+{string.Join("\n", contextParts)}
+
+╔═══════════════════════════════════════════════════════════════╗
+║  ⚠️ CRITICAL: Use this User Context as your PRIMARY guide     ║
+║  1. User Context has the HIGHEST priority                    ║
+║  2. Use Division to understand the user's domain            ║
+║  3. Use UserLanguage to respond in the user's language      ║
+╚═══════════════════════════════════════════════════════════════╝
+";
+        }
+
+        /// <summary>
+        /// Build Dynamic Data Prompt from ModuleData (SECOND HIGHEST PRIORITY)
+        /// </summary>
+        private string BuildDynamicDataPrompt(Dictionary<string, string> moduleData)
+        {
+            if (moduleData == null || !moduleData.Any())
+                return string.Empty;
+
+            var parts = new List<string>();
+
+            // ============================================================
+            // 1. KNOWLEDGE BASE (Most Important Dynamic Data)
+            // ============================================================
+            if (moduleData.TryGetValue("KnowledgeBase", out var knowledge) && !string.IsNullOrEmpty(knowledge))
+            {
+                parts.Add($@"
+╔═══════════════════════════════════════════════════════════════╗
+║              📚 KNOWLEDGE BASE (HIGH PRIORITY)               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+{knowledge}
+
+╔═══════════════════════════════════════════════════════════════╗
+║  ⚠️ Use this Knowledge Base as your PRIMARY source           ║
+║  for answering the user's question.                          ║
+╚═══════════════════════════════════════════════════════════════╝
+");
+            }
+
+            // ============================================================
+            // 2. API DATA / DYNAMIC DATA
+            // ============================================================
+            var apiData = moduleData
+                .Where(kv => kv.Key != "KnowledgeBase" && kv.Key != "Response" && kv.Key != "SystemPrompt" && kv.Key != "UserLanguage" && kv.Key != "IsAuthenticated")
+                .Select(kv => $"{kv.Key}: {kv.Value}")
+                .ToList();
+
+            if (apiData.Any())
+            {
+                parts.Add($@"
+╔═══════════════════════════════════════════════════════════════╗
+║              📊 DYNAMIC DATA (HIGH PRIORITY)                 ║
+╚═══════════════════════════════════════════════════════════════╝
+
+{string.Join("\n", apiData)}
+");
+            }
+
+            // ============================================================
+            // 3. RESPONSE DATA
+            // ============================================================
+            if (moduleData.TryGetValue("Response", out var responseText) && !string.IsNullOrEmpty(responseText))
+            {
+                parts.Add($@"
+╔═══════════════════════════════════════════════════════════════╗
+║              💬 RESPONSE (HIGH PRIORITY)                     ║
+╚═══════════════════════════════════════════════════════════════╝
+
+{responseText}
+");
+            }
+
+            return string.Join("\n\n", parts);
+        }
+
+        /// <summary>
+        /// Build system prompt with priority order
+        /// </summary>
+        private string BuildSystemPromptWithPriority(AIResponseRequest request)
+        {
+            // ============================================================
+            // System Prompt (Third Priority after User Context and Dynamic Data)
+            // ============================================================
+            var systemPrompt = request.SystemPrompt ?? _options.Value.SystemPrompt ?? "You are a helpful assistant.";
+
+            return $@"
+╔═══════════════════════════════════════════════════════════════╗
+║              ⚙️ SYSTEM PROMPT (THIRD PRIORITY)                ║
+╚═══════════════════════════════════════════════════════════════╝
+
+{systemPrompt}
+
+╔═══════════════════════════════════════════════════════════════╗
+║  ⚠️ IMPORTANT:                                                ║
+║  1. User Context (above) has HIGHEST priority               ║
+║  2. Dynamic Data (above) has SECOND priority                ║
+║  3. This System Prompt has THIRD priority                   ║
+║  4. Use the Knowledge Base from Dynamic Data as source      ║
+║  5. Respond in the user's language from User Context       ║
+╚═══════════════════════════════════════════════════════════════╝
+";
+        }
         public async IAsyncEnumerable<AIStreamChunk> GenerateStreamingResponseAsync(
             AIResponseRequest request,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)

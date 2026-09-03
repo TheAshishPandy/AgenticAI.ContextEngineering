@@ -13,7 +13,7 @@ namespace AgenticAI.ContextEngineering.Core.Interfaces
     {
         /// <summary>
         /// Generate AI response for a request
-        /// </summary>a
+        /// </summary>
         Task<AIResponseResult> GenerateResponseAsync(
             AIResponseRequest request,
             CancellationToken cancellationToken = default);

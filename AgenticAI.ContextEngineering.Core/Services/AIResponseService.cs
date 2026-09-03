@@ -1,4 +1,5 @@
 ﻿// AgenticAI.ContextEngineering.Core/Services/AIResponseService.cs
+using AgenticAI.ContextEngineering.Core.Helpers;
 using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
 using Azure.AI.OpenAI;
@@ -7,8 +8,10 @@ using Microsoft.Extensions.Options;
 using OpenAI.Chat;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,6 +25,9 @@ namespace AgenticAI.ContextEngineering.Core.Services
         private readonly bool _isConfigured;
         private readonly bool _useMockResponses;
 
+        private const int MAX_TOKENS_LIMIT = 4000;
+        private const int WARNING_TOKEN_THRESHOLD = 1500;
+
         public AIResponseService(
             AzureOpenAIClient? openAIClient,
             IOptions<AIResponseOptions> options,
@@ -30,7 +36,6 @@ namespace AgenticAI.ContextEngineering.Core.Services
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            // Check if we have valid credentials
             var hasEndpoint = !string.IsNullOrEmpty(_options.Value.Endpoint);
             var hasApiKey = !string.IsNullOrEmpty(_options.Value.ApiKey);
             var hasDeployment = !string.IsNullOrEmpty(_options.Value.DeploymentName);
@@ -64,9 +69,6 @@ namespace AgenticAI.ContextEngineering.Core.Services
             else
             {
                 _logger.LogWarning("⚠️ Azure OpenAI credentials not fully configured. Using mock responses.");
-                _logger.LogWarning($"   Endpoint: {(hasEndpoint ? "✅" : "❌")}");
-                _logger.LogWarning($"   API Key: {(hasApiKey ? "✅" : "❌")}");
-                _logger.LogWarning($"   Deployment: {(hasDeployment ? "✅" : "❌")}");
                 _isConfigured = false;
                 _useMockResponses = true;
             }
@@ -76,16 +78,13 @@ namespace AgenticAI.ContextEngineering.Core.Services
             AIResponseRequest request,
             CancellationToken cancellationToken = default)
         {
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
 
             try
             {
-                // Use mock responses if not configured
                 if (_useMockResponses || !_isConfigured || _chatClient == null)
                 {
-                    _logger.LogDebug($"Using mock response for: {request.UserQuery}");
                     var mockResponse = GenerateMockResponse(request.UserQuery);
-
                     await Task.Delay(100, cancellationToken);
 
                     return new AIResponseResult
@@ -105,84 +104,108 @@ namespace AgenticAI.ContextEngineering.Core.Services
 
                 _logger.LogDebug("Generating response for: {Query}", request.UserQuery);
 
-                // ============================================================
-                // STEP 1: Build messages with CORRECT priority order
-                // ============================================================
+                // ✅ Detect intent using IntentHelper
+                var intentType = IntentHelper.DetectIntent(request.UserQuery);
+                request.IntentType = intentType;
+                _logger.LogInformation($"🎯 Intent detected: {intentType} for query: {request.UserQuery}");
+
+                // ✅ Build context-aware query if it's a follow-up
+                if ((intentType == "confirmation" || intentType == "followup" || intentType == "negation")
+                    && !string.IsNullOrEmpty(request.LastBotQuestion))
+                {
+                    var contextAwareQuery = IntentHelper.BuildContextAwareQuery(
+                        request.UserQuery,
+                        request.LastBotQuestion,
+                        intentType
+                    );
+                    _logger.LogInformation($"💡 Context-aware query: {contextAwareQuery}");
+
+                    // Store original query and use enhanced query for processing
+                    request.Query = request.UserQuery;
+                    request.UserQuery = contextAwareQuery;
+                    request.IsFollowUp = true;
+                }
+
+                BuildConversationContext(request);
+
                 var messages = new List<OpenAI.Chat.ChatMessage>();
 
-                // ============================================================
-                // PRIORITY 1: USER CONTEXT (HIGHEST PRIORITY)
-                // User details, Division, UserId, ConversationId, Language
-                // ============================================================
-                var userContextPrompt = BuildUserContextPrompt(request);
-                if (!string.IsNullOrEmpty(userContextPrompt))
+                var systemPrompt = BuildSystemPrompt(request);
+
+                var maxTokens = request.MaxTokens;
+                var history = request.ConversationHistory?.ToList() ?? new List<ConversationMessage>();
+
+                var breakdown = TokenCounter.GetTokenBreakdown(
+                    systemPrompt: systemPrompt,
+                    query: request.UserQuery,
+                    history: history,
+                    moduleData: request.ModuleData,
+                    maxTokens: maxTokens
+                );
+
+                TokenCounter.LogTokenBreakdown(breakdown, request.UserQuery);
+
+                if (!TokenCounter.IsWithinLimit(breakdown.EstimatedTotalTokens, MAX_TOKENS_LIMIT))
                 {
-                    messages.Add(new SystemChatMessage(userContextPrompt));
+                    _logger.LogWarning(
+                        "⚠️ Token limit exceeded! Estimated: {EstimatedTokens}, Max: {MaxTokens} for query: {Query}",
+                        breakdown.EstimatedTotalTokens, MAX_TOKENS_LIMIT, request.UserQuery);
+                }
+                else if (breakdown.EstimatedTotalTokens > WARNING_TOKEN_THRESHOLD)
+                {
+                    _logger.LogWarning(
+                        "⚠️ High token usage: {EstimatedTokens} tokens for query: {Query}",
+                        breakdown.EstimatedTotalTokens, request.UserQuery);
                 }
 
-                // ============================================================
-                // PRIORITY 2: DYNAMIC DATA (ModuleData - Second Highest)
-                // Knowledge Base, API responses, user-specific data
-                // ============================================================
-                var dynamicDataPrompt = BuildDynamicDataPrompt(request.ModuleData);
-                if (!string.IsNullOrEmpty(dynamicDataPrompt))
-                {
-                    messages.Add(new SystemChatMessage(dynamicDataPrompt));
-                }
-
-                // ============================================================
-                // PRIORITY 3: SYSTEM PROMPT / KNOWLEDGE BASE (Third Priority)
-                // System instructions define how to respond
-                // ============================================================
-                var systemPrompt = BuildSystemPromptWithPriority(request);
                 if (!string.IsNullOrEmpty(systemPrompt))
                 {
                     messages.Add(new SystemChatMessage(systemPrompt));
                 }
 
-                // ============================================================
-                // PRIORITY 4: USER QUERY (Fourth Priority)
-                // The user's current query
-                // ============================================================
-                var userQuery = request.UserQuery ?? string.Empty;
-                messages.Add(new UserChatMessage(userQuery));
-
-                // ============================================================
-                // PRIORITY 5: CONVERSATION HISTORY (Lowest Priority)
-                // Previous messages for context and follow-ups
-                // ============================================================
                 if (request.ConversationHistory?.Any() == true)
                 {
-                    foreach (var msg in request.ConversationHistory.TakeLast(10))
+                    foreach (var msg in request.ConversationHistory.TakeLast(5))
                     {
                         if (string.Equals(msg.Role, "user", StringComparison.OrdinalIgnoreCase))
                             messages.Add(new UserChatMessage(msg.Content));
-                        else if (string.Equals(msg.Role, "assistant", StringComparison.OrdinalIgnoreCase))
+                        else
                             messages.Add(new AssistantChatMessage(msg.Content));
                     }
                 }
 
-                // ============================================================
-                // STEP 7: Generate AI Response
-                // ============================================================
-                var response = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
-                var completion = response.Value;
+                messages.Add(new UserChatMessage(request.UserQuery));
 
-                var responseText = completion.Content.Count > 0 ? completion.Content[0].Text : string.Empty;
+                var completion = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
+                var responseText = completion.Value.Content.Count > 0 ? completion.Value.Content[0].Text : string.Empty;
 
-                return new AIResponseResult
+                var result = new AIResponseResult
                 {
                     Response = responseText,
                     Answer = responseText,
-                    PromptTokens = completion.Usage?.InputTokenCount ?? 0,
-                    CompletionTokens = completion.Usage?.OutputTokenCount ?? 0,
-                    TokenCount = completion.Usage?.TotalTokenCount ?? 0,
+                    PromptTokens = completion.Value.Usage?.InputTokenCount ?? 0,
+                    CompletionTokens = completion.Value.Usage?.OutputTokenCount ?? 0,
+                    TokenCount = completion.Value.Usage?.TotalTokenCount ?? 0,
                     ProcessingTimeMs = stopwatch.ElapsedMilliseconds,
-                    Query = request.UserQuery,
+                    Query = request.Query ?? request.UserQuery,
                     IsSuccess = true,
                     FromCache = false,
                     CacheLevel = "Generated"
                 };
+
+                _logger.LogInformation(
+                    "📊 Actual token usage: Prompt={PromptTokens}, Completion={CompletionTokens}, Total={TotalTokens}",
+                    result.PromptTokens, result.CompletionTokens, result.TokenCount);
+
+                var tokensSaved = breakdown.EstimatedTotalTokens - result.TokenCount;
+                if (tokensSaved > 10)
+                {
+                    _logger.LogInformation(
+                        "✅ Token savings: {TokensSaved} tokens saved! (Estimated: {Estimated}, Actual: {Actual})",
+                        tokensSaved, breakdown.EstimatedTotalTokens, result.TokenCount);
+                }
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -198,164 +221,6 @@ namespace AgenticAI.ContextEngineering.Core.Services
             }
         }
 
-        /// <summary>
-        /// Build User Context Prompt (HIGHEST PRIORITY)
-        /// </summary>
-        private string BuildUserContextPrompt(AIResponseRequest request)
-        {
-            var contextParts = new List<string>();
-
-            // ============================================================
-            // 1. USER ID
-            // ============================================================
-            if (!string.IsNullOrEmpty(request.UserId))
-            {
-                contextParts.Add($"👤 User ID: {request.UserId}");
-            }
-
-            // ============================================================
-            // 2. CONVERSATION ID
-            // ============================================================
-            if (!string.IsNullOrEmpty(request.ConversationId))
-            {
-                contextParts.Add($"💬 Conversation ID: {request.ConversationId}");
-            }
-
-            // ============================================================
-            // 3. DIVISION
-            // ============================================================
-            if (!string.IsNullOrEmpty(request.Division))
-            {
-                contextParts.Add($"🏢 Division: {request.Division}");
-            }
-
-            // ============================================================
-            // 4. USER LANGUAGE
-            // ============================================================
-            if (request.ModuleData != null && request.ModuleData.TryGetValue("UserLanguage", out var language))
-            {
-                contextParts.Add($"🌐 User Language: {language}");
-            }
-
-            // ============================================================
-            // 5. AUTHENTICATION STATUS
-            // ============================================================
-            if (request.ModuleData != null && request.ModuleData.TryGetValue("IsAuthenticated", out var isAuth))
-            {
-                contextParts.Add($"🔐 Authenticated: {isAuth}");
-            }
-
-            if (!contextParts.Any())
-                return string.Empty;
-
-            return $@"
-╔═══════════════════════════════════════════════════════════════╗
-║              👤 USER CONTEXT (HIGHEST PRIORITY)               ║
-╚═══════════════════════════════════════════════════════════════╝
-
-{string.Join("\n", contextParts)}
-
-╔═══════════════════════════════════════════════════════════════╗
-║  ⚠️ CRITICAL: Use this User Context as your PRIMARY guide     ║
-║  1. User Context has the HIGHEST priority                    ║
-║  2. Use Division to understand the user's domain            ║
-║  3. Use UserLanguage to respond in the user's language      ║
-╚═══════════════════════════════════════════════════════════════╝
-";
-        }
-
-        /// <summary>
-        /// Build Dynamic Data Prompt from ModuleData (SECOND HIGHEST PRIORITY)
-        /// </summary>
-        private string BuildDynamicDataPrompt(Dictionary<string, string> moduleData)
-        {
-            if (moduleData == null || !moduleData.Any())
-                return string.Empty;
-
-            var parts = new List<string>();
-
-            // ============================================================
-            // 1. KNOWLEDGE BASE (Most Important Dynamic Data)
-            // ============================================================
-            if (moduleData.TryGetValue("KnowledgeBase", out var knowledge) && !string.IsNullOrEmpty(knowledge))
-            {
-                parts.Add($@"
-╔═══════════════════════════════════════════════════════════════╗
-║              📚 KNOWLEDGE BASE (HIGH PRIORITY)               ║
-╚═══════════════════════════════════════════════════════════════╝
-
-{knowledge}
-
-╔═══════════════════════════════════════════════════════════════╗
-║  ⚠️ Use this Knowledge Base as your PRIMARY source           ║
-║  for answering the user's question.                          ║
-╚═══════════════════════════════════════════════════════════════╝
-");
-            }
-
-            // ============================================================
-            // 2. API DATA / DYNAMIC DATA
-            // ============================================================
-            var apiData = moduleData
-                .Where(kv => kv.Key != "KnowledgeBase" && kv.Key != "Response" && kv.Key != "SystemPrompt" && kv.Key != "UserLanguage" && kv.Key != "IsAuthenticated")
-                .Select(kv => $"{kv.Key}: {kv.Value}")
-                .ToList();
-
-            if (apiData.Any())
-            {
-                parts.Add($@"
-╔═══════════════════════════════════════════════════════════════╗
-║              📊 DYNAMIC DATA (HIGH PRIORITY)                 ║
-╚═══════════════════════════════════════════════════════════════╝
-
-{string.Join("\n", apiData)}
-");
-            }
-
-            // ============================================================
-            // 3. RESPONSE DATA
-            // ============================================================
-            if (moduleData.TryGetValue("Response", out var responseText) && !string.IsNullOrEmpty(responseText))
-            {
-                parts.Add($@"
-╔═══════════════════════════════════════════════════════════════╗
-║              💬 RESPONSE (HIGH PRIORITY)                     ║
-╚═══════════════════════════════════════════════════════════════╝
-
-{responseText}
-");
-            }
-
-            return string.Join("\n\n", parts);
-        }
-
-        /// <summary>
-        /// Build system prompt with priority order
-        /// </summary>
-        private string BuildSystemPromptWithPriority(AIResponseRequest request)
-        {
-            // ============================================================
-            // System Prompt (Third Priority after User Context and Dynamic Data)
-            // ============================================================
-            var systemPrompt = request.SystemPrompt ?? _options.Value.SystemPrompt ?? "You are a helpful assistant.";
-
-            return $@"
-╔═══════════════════════════════════════════════════════════════╗
-║              ⚙️ SYSTEM PROMPT (THIRD PRIORITY)                ║
-╚═══════════════════════════════════════════════════════════════╝
-
-{systemPrompt}
-
-╔═══════════════════════════════════════════════════════════════╗
-║  ⚠️ IMPORTANT:                                                ║
-║  1. User Context (above) has HIGHEST priority               ║
-║  2. Dynamic Data (above) has SECOND priority                ║
-║  3. This System Prompt has THIRD priority                   ║
-║  4. Use the Knowledge Base from Dynamic Data as source      ║
-║  5. Respond in the user's language from User Context       ║
-╚═══════════════════════════════════════════════════════════════╝
-";
-        }
         public async IAsyncEnumerable<AIStreamChunk> GenerateStreamingResponseAsync(
             AIResponseRequest request,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -373,7 +238,6 @@ namespace AgenticAI.ContextEngineering.Core.Services
                         IsComplete = false
                     };
 
-                    // Simulate streaming delay
                     await Task.Delay(20, cancellationToken);
                 }
 
@@ -381,10 +245,44 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 yield break;
             }
 
-            var messages = new List<OpenAI.Chat.ChatMessage>
+            // ✅ Detect intent for streaming as well
+            var intentType = IntentHelper.DetectIntent(request.UserQuery);
+            request.IntentType = intentType;
+
+            if ((intentType == "confirmation" || intentType == "followup")
+                && !string.IsNullOrEmpty(request.LastBotQuestion))
             {
-                new SystemChatMessage(_options.Value.SystemPrompt ?? "You are a helpful assistant.")
-            };
+                var contextAwareQuery = IntentHelper.BuildContextAwareQuery(
+                    request.UserQuery,
+                    request.LastBotQuestion,
+                    intentType
+                );
+                request.Query = request.UserQuery;
+                request.UserQuery = contextAwareQuery;
+                request.IsFollowUp = true;
+            }
+
+            var messages = new List<OpenAI.Chat.ChatMessage>();
+
+            var systemPrompt = BuildSystemPrompt(request);
+
+            var maxTokens = request.MaxTokens;
+            var history = request.ConversationHistory?.ToList() ?? new List<ConversationMessage>();
+
+            var breakdown = TokenCounter.GetTokenBreakdown(
+                systemPrompt: systemPrompt,
+                query: request.UserQuery,
+                history: history,
+                moduleData: request.ModuleData,
+                maxTokens: maxTokens
+            );
+
+            TokenCounter.LogTokenBreakdown(breakdown, request.UserQuery);
+
+            if (!string.IsNullOrEmpty(systemPrompt))
+            {
+                messages.Add(new SystemChatMessage(systemPrompt));
+            }
 
             if (request.ConversationHistory?.Any() == true)
             {
@@ -434,22 +332,226 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 : "Simple AI Service - No token tracking");
         }
 
+        /// <summary>
+        /// Builds system prompt with enhanced context handling
+        /// </summary>
+        private string BuildSystemPrompt(AIResponseRequest request)
+        {
+            var systemPrompt = request.SystemPrompt ?? _options.Value.SystemPrompt ??
+                "You are a helpful assistant. Maintain conversation context and answer based on the provided information.";
+
+            if (request.ModuleData == null || request.ModuleData.Count == 0)
+            {
+                return systemPrompt;
+            }
+
+            var contextBuilder = new StringBuilder();
+
+            // ✅ 1. INTENT INFORMATION
+            if (!string.IsNullOrEmpty(request.IntentType))
+            {
+                contextBuilder.AppendLine("=== USER INTENT ===");
+                contextBuilder.AppendLine($"Detected Intent: {request.IntentType}");
+                contextBuilder.AppendLine($"Description: {IntentHelper.GetIntentDescription(request.IntentType)}");
+                contextBuilder.AppendLine();
+            }
+
+            // ✅ 2. LAST BOT QUESTION (For follow-ups)
+            if (!string.IsNullOrEmpty(request.LastBotQuestion))
+            {
+                contextBuilder.AppendLine("=== LAST QUESTION ASKED BY ASSISTANT ===");
+                contextBuilder.AppendLine($"The user is responding to: {request.LastBotQuestion}");
+                contextBuilder.AppendLine();
+            }
+
+            // ✅ 3. RECENT CONVERSATION CONTEXT
+            if (!string.IsNullOrEmpty(request.RecentUserMessages))
+            {
+                contextBuilder.AppendLine("=== RECENT CONVERSATION CONTEXT ===");
+                contextBuilder.AppendLine(request.RecentUserMessages);
+                contextBuilder.AppendLine();
+            }
+
+            // ✅ 4. DYNAMIC DATA (Highest Priority)
+            if (request.ModuleData.TryGetValue("DynamicData", out var dynamicData) && !string.IsNullOrEmpty(dynamicData))
+            {
+                contextBuilder.AppendLine("=== DYNAMIC DATA (HIGHEST PRIORITY) ===");
+                var truncated = dynamicData.Length > 300 ? dynamicData[..300] + "..." : dynamicData;
+                contextBuilder.AppendLine($"  {truncated}");
+                contextBuilder.AppendLine();
+            }
+
+            // ✅ 5. SEARCH RESULTS (Top 3 only)
+            if (request.ModuleData.TryGetValue("SearchResults", out var searchResults) && !string.IsNullOrEmpty(searchResults))
+            {
+                contextBuilder.AppendLine("=== SEARCH RESULTS (Top 3) ===");
+                var results = ExtractTopSearchResults(searchResults, 3);
+                foreach (var result in results)
+                {
+                    var truncated = result.Length > 300 ? result[..300] + "..." : result;
+                    contextBuilder.AppendLine($"  • {truncated}");
+                }
+                contextBuilder.AppendLine();
+            }
+
+            // ✅ 6. TOP RESULT
+            if (request.ModuleData.TryGetValue("TopResult", out var topResult) && !string.IsNullOrEmpty(topResult))
+            {
+                contextBuilder.AppendLine("=== BEST MATCH ===");
+                var cleaned = CleanResultText(topResult);
+                var truncated = cleaned.Length > 300 ? cleaned[..300] + "..." : cleaned;
+                contextBuilder.AppendLine($"  {truncated}");
+                contextBuilder.AppendLine();
+            }
+
+            // ✅ 7. KNOWLEDGE BASE
+            if (request.ModuleData.TryGetValue("KnowledgeBase", out var knowledge) && !string.IsNullOrEmpty(knowledge))
+            {
+                contextBuilder.AppendLine("=== KNOWLEDGE BASE ===");
+                var truncated = knowledge.Length > 300 ? knowledge[..300] + "..." : knowledge;
+                contextBuilder.AppendLine($"  {truncated}");
+                contextBuilder.AppendLine();
+            }
+
+            // ✅ 8. USER CONTEXT
+            var userContext = new List<string>();
+            if (request.ModuleData.TryGetValue("UserId", out var userId) && !string.IsNullOrEmpty(userId))
+                userContext.Add($"User ID: {userId}");
+            if (request.ModuleData.TryGetValue("Division", out var division) && !string.IsNullOrEmpty(division))
+                userContext.Add($"Division: {division}");
+            if (request.ModuleData.TryGetValue("UtilityAccountNumber", out var account) && !string.IsNullOrEmpty(account))
+                userContext.Add($"Account: {account}");
+            if (request.ModuleData.TryGetValue("IsAuthenticated", out var auth) && !string.IsNullOrEmpty(auth))
+                userContext.Add($"Authenticated: {auth}");
+
+            if (userContext.Any())
+            {
+                contextBuilder.AppendLine("=== USER CONTEXT ===");
+                foreach (var item in userContext)
+                {
+                    contextBuilder.AppendLine($"  {item}");
+                }
+                contextBuilder.AppendLine();
+            }
+
+            // ✅ 9. CONVERSATION SUMMARY
+            if (request.ModuleData.TryGetValue("ConversationSummary", out var summary) && !string.IsNullOrEmpty(summary))
+            {
+                contextBuilder.AppendLine("=== CONVERSATION SUMMARY ===");
+                var truncated = summary.Length > 200 ? summary[..200] + "..." : summary;
+                contextBuilder.AppendLine($"  {truncated}");
+                contextBuilder.AppendLine();
+            }
+
+            var fullPrompt = systemPrompt;
+
+            if (contextBuilder.Length > 0)
+            {
+                fullPrompt += $"\n\n{contextBuilder.ToString()}";
+
+                fullPrompt += @"
+=== RESPONSE GUIDELINES ===
+1. MAINTAIN CONTEXT: Consider what was discussed previously.
+2. FOLLOW-UP HANDLING: If user says 'yes', 'no', 'tell me more', refer to 'Last Question Asked by Assistant'.
+3. PRIORITY ORDER: Dynamic Data > Search Results > Knowledge Base.
+4. KEEP RESPONSES CONCISE: Use only needed information.
+5. If unsure what user is referring to, ask a clarifying question.
+6. For location questions, use Division context.";
+            }
+
+            if (fullPrompt.Length > 3000)
+            {
+                fullPrompt = fullPrompt[..3000] + "...";
+            }
+
+            return fullPrompt;
+        }
+
+        private List<string> ExtractTopSearchResults(string searchResults, int maxResults)
+        {
+            var resultList = new List<string>();
+
+            if (string.IsNullOrEmpty(searchResults))
+                return resultList;
+
+            var parts = searchResults.Split(new[] { "Result " }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var part in parts.Take(maxResults))
+            {
+                var cleanPart = part.Trim();
+                var lines = cleanPart.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                var summary = new StringBuilder();
+
+                foreach (var line in lines)
+                {
+                    var trimmed = line.Trim();
+                    if (trimmed.StartsWith("### Question Variants") ||
+                        trimmed.StartsWith("### Answer") ||
+                        trimmed.StartsWith("Score:") ||
+                        trimmed.StartsWith("Metadata:"))
+                    {
+                        continue;
+                    }
+                    if (!string.IsNullOrEmpty(trimmed) && trimmed.Length > 10)
+                    {
+                        summary.AppendLine(trimmed);
+                    }
+                }
+
+                if (summary.Length > 0)
+                {
+                    var summaryText = summary.ToString();
+                    if (summaryText.Length > 500)
+                    {
+                        summaryText = summaryText.Substring(0, 500) + "...";
+                    }
+                    resultList.Add(summaryText.Trim());
+                }
+            }
+
+            return resultList;
+        }
+
+        private string CleanResultText(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return string.Empty;
+
+            var cleanText = text.Replace("\r\n", "\n").Replace("\r", "\n");
+            var lines = cleanText.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var filteredLines = lines
+                .Where(line => !line.Trim().StartsWith("###") &&
+                              !line.Trim().StartsWith("Metadata:") &&
+                              !string.IsNullOrWhiteSpace(line))
+                .Take(10)
+                .Select(line => line.Trim());
+
+            var result = string.Join(" ", filteredLines);
+
+            if (result.Length > 300)
+            {
+                result = result.Substring(0, 300) + "...";
+            }
+
+            return result;
+        }
+
         private string GenerateMockResponse(string query)
         {
             var lowerQuery = query.ToLowerInvariant();
 
             var responses = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                ["what is artificial intelligence"] = "Artificial intelligence (AI) is the simulation of human intelligence in machines that are programmed to think and learn like humans. The term may also be applied to any machine that exhibits traits associated with a human mind such as learning and problem-solving.",
-                ["explain machine learning"] = "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It uses algorithms to find patterns in data and make predictions or decisions.",
-                ["difference between ai and ml"] = "AI is the broader concept of machines being able to carry out tasks in a way that we would consider 'smart'. Machine learning is a current application of AI based on the idea that we should be able to give machines access to data and let them learn for themselves.",
-                ["meaning of life"] = "The meaning of life is subjective and varies from person to person. Some find meaning in relationships, others in work, spirituality, or personal growth. The search for meaning is a fundamental human experience.",
-                ["quantum computing"] = "Quantum computing is a type of computing that harnesses the principles of quantum mechanics to process information. It uses quantum bits (qubits) that can exist in multiple states simultaneously, allowing for unprecedented computational power.",
-                ["capital of france"] = "The capital of France is Paris. It is the country's largest city and a major global center for art, fashion, gastronomy, and culture.",
-                ["renewable energy"] = "Renewable energy comes from natural sources that are constantly replenished, such as sunlight, wind, rain, tides, waves, and geothermal heat. These sources are sustainable and have a much lower environmental impact than fossil fuels.",
-                ["neural networks"] = "Neural networks are computing systems inspired by biological neural networks. They consist of interconnected nodes (neurons) that process information using connectionist approaches to computation. They are a key component of deep learning.",
-                ["deep learning"] = "Deep learning is a subset of machine learning that uses neural networks with multiple layers (deep neural networks) to progressively extract higher-level features from raw input. It has been highly successful in areas like computer vision and natural language processing.",
-                ["natural language processing"] = "Natural Language Processing (NLP) is a branch of AI that helps computers understand, interpret, and manipulate human language. It combines computational linguistics with statistical and machine learning models."
+                ["what is artificial intelligence"] = "Artificial intelligence (AI) is the simulation of human intelligence in machines.",
+                ["explain machine learning"] = "Machine learning is a subset of AI that enables systems to learn from data.",
+                ["difference between ai and ml"] = "AI is the broader concept, ML is a subset that learns from data.",
+                ["meaning of life"] = "The meaning of life is subjective and varies from person to person.",
+                ["quantum computing"] = "Quantum computing harnesses quantum mechanics to process information.",
+                ["capital of france"] = "The capital of France is Paris.",
+                ["renewable energy"] = "Renewable energy comes from natural sources that are constantly replenished.",
+                ["neural networks"] = "Neural networks are computing systems inspired by biological neural networks.",
+                ["deep learning"] = "Deep learning uses neural networks with multiple layers to learn from data.",
+                ["natural language processing"] = "NLP helps computers understand and manipulate human language."
             };
 
             foreach (var key in responses.Keys)
@@ -460,41 +562,89 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 }
             }
 
-            // Return a generic response
-            var baseResponse = $"I understand you're asking about '{query}'. ";
-            if (!_useMockResponses)
-            {
-                return baseResponse + "This is a simulated response since Azure OpenAI is not properly configured. Please add your API key to appsettings.json for real AI responses.";
-            }
-            return baseResponse + "This is a mock response for testing purposes. The AI Response Service is working correctly with mock data.";
+            return $"I understand you're asking about '{query}'. This is a mock response for testing.";
         }
 
-        private string BuildSystemPrompt(AIResponseRequest request)
+
+        private void BuildConversationContext(AIResponseRequest request)
         {
-            var systemPrompt = request.SystemPrompt ?? _options.Value.SystemPrompt ?? "You are a helpful assistant.";
+            if (request.ConversationHistory == null || !request.ConversationHistory.Any())
+                return;
 
-            // ✅ Add knowledge base context if available
-            if (request.ModuleData != null && request.ModuleData.TryGetValue("KnowledgeBase", out var knowledge))
-            {
-                systemPrompt += $"\n\nPGM KNOWLEDGE:\n---\n{knowledge}\n---\n";
-            }
+            // ✅ Extract latest messages for context
+            var latestMessages = request.ConversationHistory.TakeLast(5);
 
-            // ✅ Add division context
-            if (!string.IsNullOrEmpty(request.Division))
-            {
-                systemPrompt += $"\n\nCurrent Division: {request.Division}";
-            }
+            var contextLines = new List<string>();
+            var lastQuestion = string.Empty;
+            var recentMessages = new List<string>();
 
-            // ✅ Add user context
-            if (request.ModuleData != null)
+            foreach (var msg in latestMessages)
             {
-                if (request.ModuleData.TryGetValue("UserLanguage", out var language))
+                var role = string.Equals(msg.Role, "user", StringComparison.OrdinalIgnoreCase) ? "User" : "Assistant";
+                var content = msg.Content?.Length > 150 ? msg.Content[..150] + "..." : msg.Content;
+
+                // Track the last question from the bot
+                if (!string.IsNullOrEmpty(msg.Content) &&
+                    string.Equals(msg.Role, "assistant", StringComparison.OrdinalIgnoreCase))
                 {
-                    systemPrompt += $"\nUser Language: {language}";
+                    // Check if it's a question (contains "?" or starts with "would", "could", etc.)
+                    if (msg.Content.Contains("?") ||
+                        msg.Content.StartsWith("Would", StringComparison.OrdinalIgnoreCase) ||
+                        msg.Content.StartsWith("Could", StringComparison.OrdinalIgnoreCase) ||
+                        msg.Content.StartsWith("Do you", StringComparison.OrdinalIgnoreCase) ||
+                        msg.Content.StartsWith("Can I", StringComparison.OrdinalIgnoreCase) ||
+                        msg.Content.StartsWith("Would you", StringComparison.OrdinalIgnoreCase) ||
+                        msg.Content.StartsWith("Did you", StringComparison.OrdinalIgnoreCase))
+                    {
+                        lastQuestion = content;
+                    }
+                }
+
+                recentMessages.Add($"{role}: {content}");
+            }
+
+            // ✅ Set the context properties
+            if (!string.IsNullOrEmpty(lastQuestion))
+            {
+                request.LastBotQuestion = lastQuestion;
+            }
+
+            if (recentMessages.Any())
+            {
+                request.RecentUserMessages = string.Join("\n", recentMessages);
+            }
+
+            // ✅ Detect intent from the latest user message
+            if (request.ConversationHistory.Any())
+            {
+                var latestUserMessage = request.ConversationHistory
+                    .Where(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase))
+                    .LastOrDefault();
+
+                if (latestUserMessage != null)
+                {
+                    var intentType = IntentHelper.DetectIntent(latestUserMessage.Content);
+                    request.IntentType = intentType;
+
+                    // ✅ Build context-aware query if it's a follow-up
+                    if ((intentType == "confirmation" || intentType == "followup" || intentType == "negation")
+                        && !string.IsNullOrEmpty(request.LastBotQuestion))
+                    {
+                        var contextAwareQuery = IntentHelper.BuildContextAwareQuery(
+                            latestUserMessage.Content,
+                            request.LastBotQuestion,
+                            intentType
+                        );
+
+                        // Use context-aware query for processing
+                        request.Query = latestUserMessage.Content;
+                        request.UserQuery = contextAwareQuery;
+                        request.IsFollowUp = true;
+                    }
                 }
             }
 
-            return systemPrompt;
+            _logger.LogDebug($"📝 Context built: LastQuestion='{lastQuestion}', RecentMessages={recentMessages.Count}, Intent={request.IntentType}");
         }
     }
 }

@@ -56,7 +56,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
 
                 var response = await _inner.GenerateResponseAsync(request, cancellationToken);
 
-                if (response != null && response.IsSuccess && !string.IsNullOrEmpty(response.Response) && request.UseCache)
+                    if (response != null && response.IsSuccess && !string.IsNullOrEmpty(response.Response) && request.UseCache)
                 {
                     response.FromCache = false;
                     response.CacheLevel = "Generated";

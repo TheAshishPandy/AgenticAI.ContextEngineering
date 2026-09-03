@@ -1,0 +1,294 @@
+﻿KeyValuePair`2,KeyValuePair`2.Key,KeyValuePair`2.Value
+"[Language, English]",Language,English
+"[Role, 1]",Role,1
+"[UserId, c6d80e5e-e02b-4742-8576-ec26b0d592f4]",UserId,c6d80e5e-e02b-4742-8576-ec26b0d592f4
+"[ChannelId, emulator]",ChannelId,emulator
+"[ConversationId, 80435bf0-a63d-11f1-899b-51c11d757ed3|livechat]",ConversationId,80435bf0-a63d-11f1-899b-51c11d757ed3|livechat
+"[Division, V11S]",Division,V11S
+"[UtilityAccountNumber, 8496017837]",UtilityAccountNumber,8496017837
+"[AccountNoCount, 0]",AccountNoCount,0
+"[IsAuthenticated, True]",IsAuthenticated,True
+"[PersonaId, 1]",PersonaId,1
+"[Timestamp, 2026-09-01T19:57:57.9645270Z]",Timestamp,2026-09-01T19:57:57.9645270Z
+"[SessionId, 80435bf0-a63d-11f1-899b-51c11d757ed3|livechat]",SessionId,80435bf0-a63d-11f1-899b-51c11d757ed3|livechat
+"[Query, where is your hub]",Query,"where is your hub"
+"[SearchType, HybridWithReranking]",SearchType,HybridWithReranking
+"[SearchResults, Search Results:
+───────────────────
+1. Result 1 (Score: 0.704)
+   ### Question Variants	
+- I forgot my password / Forgot password / Reset my password / Can't remember my password
+
+### Answer	
+Click below to recover your password.
+
+If you have forgotten your password, click the link below.
+[Forgot My Password](https://u-pgw.smarte3.ai/Portal/forgotpassword)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:32.7093934Z, chunk_size=295, word_count=36
+
+2. Result 2 (Score: 0.702)
+   ### Question Variants	
+- How do I sign up for the Parts and Labor Plan? / Buy PLP / Purchase Parts and Labor Plan
+
+### Answer	
+To sign up for PLP, log into My Account and click Parts & Labor Appliance Protection Plan.
+
+You can also go to www.pgwplp.com and click Purchase Now.
+[Parts & Labor Plan in My Account](https://u-pgw.smarte3.ai/Portal/PartsAndLabourPlan)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:43.2167719Z, chunk_size=366, word_count=55
+
+3. Result 3 (Score: 0.699)
+   ### Question Variants	
+- How do I change my email address or phone number? / Update my contact information / Change my phone number / Change my email
+
+### Answer	
+Click below to update your information.
+[Change Email](https://u-pgw.smarte3.ai/Portal/myprofile) [Change Phone Number](https://u-pgw.smarte3.ai/Portal/myprofile)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:32.9650050Z, chunk_size=326, word_count=37
+
+4. Result 4 (Score: 0.697)
+   ### Question Variants	
+- How do I apply for Marketplace rebates? / PGW Marketplace rebate / Instant rebate thermostat
+
+### Answer	
+PGW offers instant rebates through the Online Marketplace. An application is not required.
+
+To access the Online Marketplace, log into My Account. The rebate will be applied to your Shopping Cart before the purchase is completed.
+
+Important: Thermostats purchased outside of the Online Marketplace are not eligible for rebates.
+[Online Marketplace](https://u-pgw.smarte3.ai/Portal/Marketplace)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:41.7892033Z, chunk_size=529, word_count=66
+
+5. Result 5 (Score: 0.696)
+   ### Question Variants	
+- What is a Neighborhood Energy Center? / NEC Philadelphia / In-person help with my gas bill / Where can I get help in person
+
+### Answer	
+Neighborhood Energy Centers (NECs) provide low and moderate income families with counseling and solutions through assistance, conservation, education and related services.
+
+If you need help in person, you can visit an NEC and get one-on-one assistance with your energy bills. A map of NEC locations is available on the PGW website.
+
+NECs can also help you enroll in the Third-Party Notification Program and apply for assistance programs.
+[Assistance Programs & Grants](https://www.pgworks.com/customer-care/payment-assistance)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T07:32:22.4286807Z, chunk_size=693, word_count=95
+
+6. Result 6 (Score: 0.696)
+   ### Question Variants	
+- Where is the PGW worksites map? / Pipeline improvement map / Current PGW projects
+
+### Answer	
+PGW's Worksites map shows current projects, or projects scheduled to start within the next month.
+
+You can browse the Pipeline Improvement Map on the PGW website to see where PGW is working in your neighborhood.
+
+PGW makes every effort to ensure Pipeline Improvement information is current and accurate. To find out more about possible work in your area, view the map or contact PGW at 215-684-6767.
+[Pipeline Improvement](https://www.pgworks.com/safety-reliability/pipeline-improvement)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:30.8168147Z, chunk_size=612, word_count=82
+
+7. Result 7 (Score: 0.696)
+   ### Question Variants	
+- Financing for a new heater / Loans for gas equipment / Keystone HELP / Philadelphia Home Improvement Loan
+
+### Answer	
+PGW lists financing options to help reduce out-of-pocket costs for natural gas equipment upgrades:
+
+- Keystone HELP: Offers homeowner loans currently starting as low as 0.99% with terms of up to 20 years.
+- Philadelphia Home Improvement Loan (PHIL): Offers low fixed rates (3-5%), terms of up to 20 years, no equity or appraisal requirements and no fees.
+
+PGW also notes that customers typically see a return on their investment in 1 to 3 years after upgrading equipment.
+[Efficiencies & Incentives](https://www.pgworks.com/customer-care/efficiency)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:28.5892035Z, chunk_size=699, word_count=98
+
+8. Result 8 (Score: 0.695)
+   ### Question Variants	
+- I'm moving / Moving out of Philadelphia / Transfer my gas service / Moving house PGW
+
+### Answer	
+Before you move, notify PGW at 215-235-1000 at least seven days before the shutoff or transfer to avoid unnecessary costs.
+
+You are responsible for gas used at the property until PGW can access your meter to shut it off.
+
+You can turn service on or off online:
+- Turn service ON: available online through the PGW website
+- Turn service OFF: requires a PGW My Account (log in or register at myaccount.pgworks.com)
+
+[Start/Stop Service](https://www.pgworks.com/customer-care/your-home/service)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T07:32:23.3174383Z, chunk_size=622, word_count=88
+
+9. Result 9 (Score: 0.695)
+   ### Question Variants	
+- Someone says they are from PGW / Imposter at my door / Is this person really from PGW / Utility scam
+
+### Answer	
+Before letting anyone claiming to be a utility worker into your home or business, always ask for identification. If you're even the slightest bit unsure about a person's claim to be from PGW, call 911.
+
+All PGW employees have:
+- ID badges
+- Official white PGW vehicles with clearly visible PGW logos and municipal license plates
+- Branded clothing
+
+PGW provides an Imposter Awareness brochure in English, Spanish and Chinese on its website.
+[Imposter Awareness](https://www.pgworks.com/safety-reliability/imposter-awareness) [Emergencies](https://www.pgworks.com/emergencies)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T07:32:15.4071137Z, chunk_size=722, word_count=94
+
+10. Result 10 (Score: 0.694)
+   ### Question Variants	
+- How do I apply for LIHEAP? / LIHEAP application / Where do I apply for LIHEAP
+
+### Answer	
+Apply for LIHEAP online at www.compass.state.pa.us or complete a paper application. Call 215-235-1000 to request a paper application.
+
+Click below for more information.
+[LIHEAP, Crisis & UESF Grants](https://www.pgworks.com/customer-care/liheap-crisis-uesf-grants)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:34.9302831Z, chunk_size=383, word_count=45
+
+]",SearchResults,"Search Results:
+───────────────────
+1. Result 1 (Score: 0.704)
+   ### Question Variants	
+- I forgot my password / Forgot password / Reset my password / Can't remember my password
+
+### Answer	
+Click below to recover your password.
+
+If you have forgotten your password, click the link below.
+[Forgot My Password](https://u-pgw.smarte3.ai/Portal/forgotpassword)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:32.7093934Z, chunk_size=295, word_count=36
+
+2. Result 2 (Score: 0.702)
+   ### Question Variants	
+- How do I sign up for the Parts and Labor Plan? / Buy PLP / Purchase Parts and Labor Plan
+
+### Answer	
+To sign up for PLP, log into My Account and click Parts & Labor Appliance Protection Plan.
+
+You can also go to www.pgwplp.com and click Purchase Now.
+[Parts & Labor Plan in My Account](https://u-pgw.smarte3.ai/Portal/PartsAndLabourPlan)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:43.2167719Z, chunk_size=366, word_count=55
+
+3. Result 3 (Score: 0.699)
+   ### Question Variants	
+- How do I change my email address or phone number? / Update my contact information / Change my phone number / Change my email
+
+### Answer	
+Click below to update your information.
+[Change Email](https://u-pgw.smarte3.ai/Portal/myprofile) [Change Phone Number](https://u-pgw.smarte3.ai/Portal/myprofile)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:32.9650050Z, chunk_size=326, word_count=37
+
+4. Result 4 (Score: 0.697)
+   ### Question Variants	
+- How do I apply for Marketplace rebates? / PGW Marketplace rebate / Instant rebate thermostat
+
+### Answer	
+PGW offers instant rebates through the Online Marketplace. An application is not required.
+
+To access the Online Marketplace, log into My Account. The rebate will be applied to your Shopping Cart before the purchase is completed.
+
+Important: Thermostats purchased outside of the Online Marketplace are not eligible for rebates.
+[Online Marketplace](https://u-pgw.smarte3.ai/Portal/Marketplace)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:41.7892033Z, chunk_size=529, word_count=66
+
+5. Result 5 (Score: 0.696)
+   ### Question Variants	
+- What is a Neighborhood Energy Center? / NEC Philadelphia / In-person help with my gas bill / Where can I get help in person
+
+### Answer	
+Neighborhood Energy Centers (NECs) provide low and moderate income families with counseling and solutions through assistance, conservation, education and related services.
+
+If you need help in person, you can visit an NEC and get one-on-one assistance with your energy bills. A map of NEC locations is available on the PGW website.
+
+NECs can also help you enroll in the Third-Party Notification Program and apply for assistance programs.
+[Assistance Programs & Grants](https://www.pgworks.com/customer-care/payment-assistance)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T07:32:22.4286807Z, chunk_size=693, word_count=95
+
+6. Result 6 (Score: 0.696)
+   ### Question Variants	
+- Where is the PGW worksites map? / Pipeline improvement map / Current PGW projects
+
+### Answer	
+PGW's Worksites map shows current projects, or projects scheduled to start within the next month.
+
+You can browse the Pipeline Improvement Map on the PGW website to see where PGW is working in your neighborhood.
+
+PGW makes every effort to ensure Pipeline Improvement information is current and accurate. To find out more about possible work in your area, view the map or contact PGW at 215-684-6767.
+[Pipeline Improvement](https://www.pgworks.com/safety-reliability/pipeline-improvement)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:30.8168147Z, chunk_size=612, word_count=82
+
+7. Result 7 (Score: 0.696)
+   ### Question Variants	
+- Financing for a new heater / Loans for gas equipment / Keystone HELP / Philadelphia Home Improvement Loan
+
+### Answer	
+PGW lists financing options to help reduce out-of-pocket costs for natural gas equipment upgrades:
+
+- Keystone HELP: Offers homeowner loans currently starting as low as 0.99% with terms of up to 20 years.
+- Philadelphia Home Improvement Loan (PHIL): Offers low fixed rates (3-5%), terms of up to 20 years, no equity or appraisal requirements and no fees.
+
+PGW also notes that customers typically see a return on their investment in 1 to 3 years after upgrading equipment.
+[Efficiencies & Incentives](https://www.pgworks.com/customer-care/efficiency)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:28.5892035Z, chunk_size=699, word_count=98
+
+8. Result 8 (Score: 0.695)
+   ### Question Variants	
+- I'm moving / Moving out of Philadelphia / Transfer my gas service / Moving house PGW
+
+### Answer	
+Before you move, notify PGW at 215-235-1000 at least seven days before the shutoff or transfer to avoid unnecessary costs.
+
+You are responsible for gas used at the property until PGW can access your meter to shut it off.
+
+You can turn service on or off online:
+- Turn service ON: available online through the PGW website
+- Turn service OFF: requires a PGW My Account (log in or register at myaccount.pgworks.com)
+
+[Start/Stop Service](https://www.pgworks.com/customer-care/your-home/service)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T07:32:23.3174383Z, chunk_size=622, word_count=88
+
+9. Result 9 (Score: 0.695)
+   ### Question Variants	
+- Someone says they are from PGW / Imposter at my door / Is this person really from PGW / Utility scam
+
+### Answer	
+Before letting anyone claiming to be a utility worker into your home or business, always ask for identification. If you're even the slightest bit unsure about a person's claim to be from PGW, call 911.
+
+All PGW employees have:
+- ID badges
+- Official white PGW vehicles with clearly visible PGW logos and municipal license plates
+- Branded clothing
+
+PGW provides an Imposter Awareness brochure in English, Spanish and Chinese on its website.
+[Imposter Awareness](https://www.pgworks.com/safety-reliability/imposter-awareness) [Emergencies](https://www.pgworks.com/emergencies)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T07:32:15.4071137Z, chunk_size=722, word_count=94
+
+10. Result 10 (Score: 0.694)
+   ### Question Variants	
+- How do I apply for LIHEAP? / LIHEAP application / Where do I apply for LIHEAP
+
+### Answer	
+Apply for LIHEAP online at www.compass.state.pa.us or complete a paper application. Call 215-235-1000 to request a paper application.
+
+Click below for more information.
+[LIHEAP, Crisis & UESF Grants](https://www.pgworks.com/customer-care/liheap-crisis-uesf-grants)
+   Metadata: index_name=smartbotwebsitenew, created_at=2026-07-23T08:09:34.9302831Z, chunk_size=383, word_count=45
+
+"
+"[TopResult, ### Question Variants	
+- I forgot my password / Forgot password / Reset my password / Can't remember my password
+
+### Answer	
+Click below to recover your password.
+
+If you have forgotten your password, click the link below.
+[Forgot My Password](https://u-pgw.smarte3.ai/Portal/forgotpassword)]",TopResult,"### Question Variants	
+- I forgot my password / Forgot password / Reset my password / Can't remember my password
+
+### Answer	
+Click below to recover your password.
+
+If you have forgotten your password, click the link below.
+[Forgot My Password](https://u-pgw.smarte3.ai/Portal/forgotpassword)"
+"[TopResultScore, 0.7043]",TopResultScore,0.7043
+"[ResultCount, 10]",ResultCount,10
+"[TotalResults, 10]",TotalResults,10
+"[SearchTimeMs, 2256.4194]",SearchTimeMs,2256.4194
+"[MinRelevanceScore, 0.3]",MinRelevanceScore,0.3

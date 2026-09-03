@@ -2,6 +2,7 @@
 using AgenticAI.ContextEngineering.Core.Caching;
 using AgenticAI.ContextEngineering.Core.Extensions;
 using AgenticAI.ContextEngineering.Core.Interfaces;
+using AgenticAI.ContextEngineering.Core.Services;
 using AgenticAI.ContextEngineering.Demo.Demos;
 using AgenticAI.ContextEngineering.Demo.Services;
 using Microsoft.Extensions.Configuration;
@@ -50,6 +51,8 @@ namespace AgenticAI.ContextEngineering.Demo
                 services.AddScoped<TokenOptimizedDemo>();
                 services.AddScoped<StatisticsDemo>();
                 services.AddScoped<ClearCacheDemo>();
+                services.AddScoped<ConversationStatsDemo>();  // Conversation Stats Dashboard
+                services.AddScoped<ConversationDemo>();       // NEW: Conversation Demo with AI calls
                 services.AddScoped<DemoRunner>();
 
                 Console.WriteLine("🔧 Building service provider...");
@@ -120,7 +123,8 @@ namespace AgenticAI.ContextEngineering.Demo
                 (typeof(IFaqService), "FAQ Service"),
                 (typeof(ITokenOptimizedService), "Token Optimized Service"),
                 (typeof(IQdrantClient), "Qdrant Client"),
-                (typeof(IEmbeddingGenerator), "Embedding Generator")
+                (typeof(IEmbeddingGenerator), "Embedding Generator"),
+                (typeof(ITokenUsageTracker), "Token Usage Tracker")
             };
 
             foreach (var (type, name) in serviceTypes)
@@ -189,6 +193,20 @@ namespace AgenticAI.ContextEngineering.Demo
                     await runner.RunDemoAsync<ClearCacheDemo>();
                     break;
 
+                // Conversation Stats Commands
+                case "conv":
+                case "conversation":
+                case "conv-stats":
+                case "conversations":
+                    await runner.RunDemoAsync<ConversationStatsDemo>();
+                    break;
+
+                // NEW: Conversation Demo with AI calls
+                case "conv-demo":
+                case "conversation-demo":
+                    await runner.RunDemoAsync<ConversationDemo>();
+                    break;
+
                 // Legacy commands for backward compatibility
                 case "kv-test":
                     await runner.RunDemoAsync<KVCacheDemo>();
@@ -241,12 +259,16 @@ namespace AgenticAI.ContextEngineering.Demo
 ║  optimized        - Token Optimized Service                          ║
 ║  stats            - Cache Statistics                                 ║
 ║  clear            - Clear all caches                                 ║
+║  conv, conversation - Conversation Token Usage Dashboard             ║
+║  conv-demo        - Make AI calls with Conversation IDs (NEW)        ║
 ╠═══════════════════════════════════════════════════════════════════════╣
 ║  Legacy Commands (backward compatibility):                           ║
 ║  kv-test, token-cache, token-stats, token-clear,                    ║
 ║  token-compare, token-optimized                                     ║
 ╠═══════════════════════════════════════════════════════════════════════╣
 ║  Usage: dotnet run -- <command>                                     ║
+║  Example: dotnet run -- conv-demo                                   ║
+║  Example: dotnet run -- conv                                        ║
 ║  Example: dotnet run -- all                                         ║
 ╚═══════════════════════════════════════════════════════════════════════╝");
         }

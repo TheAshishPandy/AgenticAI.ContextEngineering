@@ -1,51 +1,51 @@
-﻿<!-- AgenticAI.ContextEngineering.Core.csproj -->
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
 		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
 		<LangVersion>13.0</LangVersion>
-		<!--<PackageReadmeFile>README.md</PackageReadmeFile>-->
 
-		<!-- NuGet Package -->
+		<!-- NuGet -->
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>AgenticAI.ContextEngineering</PackageId>
 		<Version>1.0.0</Version>
 
-		<!-- Package Information -->
 		<Authors>AgenticAI</Authors>
 		<Company>AgenticAI</Company>
 		<Description>Complete Context Engineering Library for AI and LLM Applications</Description>
+
 		<PackageTags>agentic-ai;context-engineering;llm;ai;compression;memory;evaluation;dotnet9</PackageTags>
 
-		<!-- License -->
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 
-		<!-- Documentation -->
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<NoWarn>CS1591</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
+
+		<!-- Microsoft Extensions -->
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
 
-		<PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
-		<PackageReference Include="TiktokenSharp" Version="1.2.1" />
-		<PackageReference Include="System.Text.Json" Version="9.0.0" />
-	</ItemGroup>
-	<ItemGroup>
+		<!-- Caching -->
+		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Caching.SqlServer" Version="9.0.0" />
-		<PackageReference Include="System.Text.Json" Version="9.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.0" />
+
+		<!-- AI -->
+		<PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
 		<PackageReference Include="System.ClientModel" Version="1.2.1" />
+		<PackageReference Include="TiktokenSharp" Version="1.2.1" />
+
+		<!-- JSON -->
+		<PackageReference Include="System.Text.Json" Version="9.0.0" />
 
 	</ItemGroup>
+
 </Project>

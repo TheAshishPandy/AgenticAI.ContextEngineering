@@ -2,6 +2,7 @@
 using AgenticAI.ContextEngineering.Core.Interfaces;
 using AgenticAI.ContextEngineering.Core.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,60 +16,109 @@ namespace AgenticAI.ContextEngineering.Core.Services
         private readonly ITokenCache _tokenCache;
         private readonly IAIResponseService _aiResponseService;
         private readonly ILogger<TokenOptimizedService> _logger;
+        private readonly TokenOptimizedOptions _options;
+
+        // ✅ Default values (will be overridden by appsettings.json)
+        private const int DEFAULT_MAX_TOKENS = 150;
+        private const float DEFAULT_TEMPERATURE = 0.2f;
+        private const string DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant. Answer concisely (1-3 sentences).";
+        private const int DEFAULT_MAX_QUERY_LENGTH = 200;
+        private const int DEFAULT_MAX_METADATA_LENGTH = 300;
+        private const int DEFAULT_CACHE_EXPIRATION_HOURS = 24;
 
         public TokenOptimizedService(
             ITokenCache tokenCache,
             IAIResponseService aiResponseService,
+            IOptions<TokenOptimizedOptions> options,
             ILogger<TokenOptimizedService> logger)
         {
             _tokenCache = tokenCache ?? throw new ArgumentNullException(nameof(tokenCache));
             _aiResponseService = aiResponseService ?? throw new ArgumentNullException(nameof(aiResponseService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _options = options?.Value ?? new TokenOptimizedOptions();
         }
 
         public async Task<OptimizedResponse> GetOptimizedResponseAsync(
             string query,
-            OptimizedRequestOptions? options = null,
+            OptimizedRequestOptions? requestOptions = null,
             CancellationToken cancellationToken = default)
         {
-            options ??= new OptimizedRequestOptions();
+            requestOptions ??= new OptimizedRequestOptions();
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             try
             {
-                _logger.LogInformation($"📝 Processing query: {query}");
+                // ✅ Use values from appsettings.json with fallback to defaults
+                var systemPrompt = requestOptions.SystemPrompt ??
+                                   _options.DefaultSystemPrompt ??
+                                   DEFAULT_SYSTEM_PROMPT;
 
-                var cacheKey = $"optimized:{query.GetHashCode()}";
+                var maxTokens = requestOptions.MaxTokens ??
+                               _options.DefaultMaxTokens ??
+                               DEFAULT_MAX_TOKENS;
 
-                // Try to get from token cache
-                if (options.UseCache == true)
+                var temperature = requestOptions.Temperature ??
+                                 _options.DefaultTemperature ??
+                                 DEFAULT_TEMPERATURE;
+
+                var maxQueryLength = _options.MaxQueryLength ?? DEFAULT_MAX_QUERY_LENGTH;
+                var maxMetadataLength = _options.MaxMetadataLength ?? DEFAULT_MAX_METADATA_LENGTH;
+                var cacheExpirationHours = _options.CacheExpirationHours ?? DEFAULT_CACHE_EXPIRATION_HOURS;
+
+                // ✅ Truncate query if too long
+                var truncatedQuery = TruncateString(query, maxQueryLength);
+                if (truncatedQuery != query)
+                {
+                    _logger.LogWarning($"⚠️ Query truncated from {query.Length} to {truncatedQuery.Length} chars");
+                }
+
+                // ✅ Count tokens for the query
+                var estimatedTokens = TokenCounter.CountTokens(truncatedQuery);
+                _logger.LogInformation($"📝 Query token estimate: {estimatedTokens} tokens for: {truncatedQuery}");
+
+                var cacheKey = $"optimized:{truncatedQuery.GetHashCode()}";
+
+                if (requestOptions.UseCache == true)
                 {
                     if (_tokenCache.TryGet<OptimizedResponse>(cacheKey, out var cachedResponse) && cachedResponse != null)
                     {
-                        _logger.LogInformation($"✅ Cache HIT for: {query}");
+                        _logger.LogInformation($"✅ Cache HIT for: {truncatedQuery}");
                         cachedResponse.FromCache = true;
                         cachedResponse.ProcessingTimeMs = stopwatch.ElapsedMilliseconds;
                         return cachedResponse;
                     }
                 }
 
-                _logger.LogInformation($"❌ Cache MISS for: {query}");
+                _logger.LogInformation($"❌ Cache MISS for: {truncatedQuery}");
+
+                // ✅ Count tokens for the full request
+                var breakdown = TokenCounter.GetTokenBreakdown(
+                    systemPrompt: systemPrompt,
+                    query: truncatedQuery,
+                    history: new List<ConversationMessage>(),
+                    moduleData: requestOptions.Metadata?.ToDictionary(k => k.Key, v => v.Value?.ToString() ?? string.Empty),
+                    maxTokens: maxTokens
+                );
+
+                TokenCounter.LogTokenBreakdown(breakdown, truncatedQuery);
 
                 var request = new AIResponseRequest
                 {
-                    UserQuery = query,
-                    Query = query,
-                    SystemPrompt = options.SystemPrompt ?? "You are a helpful assistant.",
-                    MaxTokens = options.MaxTokens ?? 500,
-                    Temperature = options.Temperature ?? 0.7f,
-                    UseCache = options.UseCache ?? true
+                    UserQuery = truncatedQuery,
+                    Query = truncatedQuery,
+                    SystemPrompt = systemPrompt,
+                    MaxTokens = maxTokens,
+                    Temperature = temperature,
+                    UseCache = requestOptions.UseCache ?? true
                 };
 
-                if (options.Metadata != null)
+                // ✅ Truncate metadata values
+                if (requestOptions.Metadata != null)
                 {
-                    foreach (var kvp in options.Metadata)
+                    foreach (var kvp in requestOptions.Metadata)
                     {
-                        request.ModuleData[kvp.Key] = kvp.Value?.ToString() ?? string.Empty;
+                        var value = kvp.Value?.ToString() ?? string.Empty;
+                        request.ModuleData[kvp.Key] = TruncateString(value, maxMetadataLength);
                     }
                 }
 
@@ -78,7 +128,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 {
                     return new OptimizedResponse
                     {
-                        Query = query,
+                        Query = truncatedQuery,
                         Error = response.Error,
                         ProcessingTimeMs = stopwatch.ElapsedMilliseconds,
                         FromCache = false
@@ -88,7 +138,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 var optimizedResponse = new OptimizedResponse
                 {
                     Answer = response.Response,
-                    Query = query,
+                    Query = truncatedQuery,
                     FromCache = false,
                     ProcessingTimeMs = response.ProcessingTimeMs,
                     Confidence = response.Confidence > 0 ? response.Confidence : 0.75,
@@ -99,14 +149,28 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     }
                 };
 
-                if (options.UseCache == true)
+                // ✅ Log token savings
+                var tokensSaved = breakdown.EstimatedTotalTokens - response.TokenCount;
+                if (tokensSaved > 0)
+                {
+                    _logger.LogInformation(
+                        "✅ Token savings: {TokensSaved} tokens saved! (Estimated: {Estimated}, Actual: {Actual})",
+                        tokensSaved, breakdown.EstimatedTotalTokens, response.TokenCount);
+                }
+
+                // ✅ Log actual token usage
+                _logger.LogInformation(
+                    "📊 Actual token usage: Prompt={PromptTokens}, Completion={CompletionTokens}, Total={TotalTokens}",
+                    response.PromptTokens, response.CompletionTokens, response.TokenCount);
+
+                if (requestOptions.UseCache == true)
                 {
                     _tokenCache.Set(
                         cacheKey,
                         optimizedResponse,
                         tokenCount: response.TokenCount,
-                        expiration: TimeSpan.FromHours(24));
-                    _logger.LogInformation($"✅ Response cached for: {query}");
+                        expiration: TimeSpan.FromHours(cacheExpirationHours));
+                    _logger.LogInformation($"✅ Response cached for: {truncatedQuery}");
                 }
 
                 return optimizedResponse;
@@ -126,16 +190,25 @@ namespace AgenticAI.ContextEngineering.Core.Services
 
         public async Task<Dictionary<string, OptimizedResponse>> GetBatchOptimizedResponsesAsync(
             List<string> queries,
-            OptimizedRequestOptions? options = null,
+            OptimizedRequestOptions? requestOptions = null,
             CancellationToken cancellationToken = default)
         {
             var results = new Dictionary<string, OptimizedResponse>();
 
-            foreach (var query in queries.Distinct())
+            var uniqueQueries = queries.Distinct().ToList();
+            var lockObj = new object();
+
+            await Task.Run(() =>
             {
-                var response = await GetOptimizedResponseAsync(query, options, cancellationToken);
-                results[query] = response;
-            }
+                Parallel.ForEach(uniqueQueries, new ParallelOptions { MaxDegreeOfParallelism = 3 }, async (query) =>
+                {
+                    var response = await GetOptimizedResponseAsync(query, requestOptions, cancellationToken);
+                    lock (lockObj)
+                    {
+                        results[query] = response;
+                    }
+                });
+            });
 
             return results;
         }
@@ -156,5 +229,28 @@ namespace AgenticAI.ContextEngineering.Core.Services
         {
             return await _tokenCache.GenerateReportAsync();
         }
+
+        private string TruncateString(string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value))
+                return value ?? string.Empty;
+
+            return value.Length > maxLength ? value[..maxLength] : value;
+        }
+    }
+
+    /// <summary>
+    /// Token Optimized Service Options
+    /// </summary>
+    public class TokenOptimizedOptions
+    {
+        public int? DefaultMaxTokens { get; set; }
+        public float? DefaultTemperature { get; set; }
+        public string? DefaultSystemPrompt { get; set; }
+        public int? MaxQueryLength { get; set; }
+        public int? MaxMetadataLength { get; set; }
+        public int? CacheExpirationHours { get; set; }
+        public bool? EnableQueryTruncation { get; set; }
+        public bool? EnableMetadataTruncation { get; set; }
     }
 }

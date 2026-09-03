@@ -22,6 +22,7 @@ namespace AgenticAI.ContextEngineering.Core.Models
 
     public class SearchRequest
     {
+        public List<ConversationMessage> ConversationHistory { get; set; } = new();
         public string Query { get; set; } = string.Empty;
         public int TopResults { get; set; } = 10;
         public double MinimumRelevanceScore { get; set; } = 0.0;

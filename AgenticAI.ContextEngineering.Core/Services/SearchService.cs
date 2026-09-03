@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -22,9 +24,12 @@ namespace AgenticAI.ContextEngineering.Core.Services
         private readonly ILogger<SearchService> _logger;
         private readonly IKVCache _kvCache;
         private readonly ITokenCache _tokenCache;
+        private readonly IAIResponseService _aiResponseService; 
         private readonly int _defaultTopResults;
         private readonly double _minRelevanceScore;
         private readonly bool _enableCaching;
+        private readonly bool _enableAIQueryGeneration;
+        private readonly int _maxQueryVariants;
 
         private const string SEARCH_CACHE_PREFIX = "search:result:";
         private const string LEXICAL_CACHE_PREFIX = "search:lexical:";
@@ -39,7 +44,8 @@ namespace AgenticAI.ContextEngineering.Core.Services
             IConfiguration configuration,
             ILogger<SearchService> logger,
             IKVCache kvCache,
-            ITokenCache tokenCache)
+            ITokenCache tokenCache,
+            IAIResponseService aiResponseService = null) // ✅ Optional
         {
             _hybridSearchEngine = hybridSearchEngine ?? throw new ArgumentNullException(nameof(hybridSearchEngine));
             _embeddingGenerator = embeddingGenerator ?? throw new ArgumentNullException(nameof(embeddingGenerator));
@@ -47,10 +53,13 @@ namespace AgenticAI.ContextEngineering.Core.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _kvCache = kvCache ?? throw new ArgumentNullException(nameof(kvCache));
             _tokenCache = tokenCache ?? throw new ArgumentNullException(nameof(tokenCache));
+            _aiResponseService = aiResponseService;
 
             _defaultTopResults = _configuration.GetValue<int>("Search:DefaultTopK", 10);
             _minRelevanceScore = _configuration.GetValue<double>("Search:MinimumRelevanceScore", 0.3);
             _enableCaching = _configuration.GetValue<bool>("Search:EnableCaching", true);
+            _enableAIQueryGeneration = _configuration.GetValue<bool>("Search:EnableAIQueryGeneration", true);
+            _maxQueryVariants = _configuration.GetValue<int>("Search:MaxQueryVariants", 5);
         }
 
         public async Task<SearchResponse> SearchAsync(SearchRequest request, CancellationToken cancellationToken = default)
@@ -62,6 +71,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 ValidateAndNormalizeRequest(request);
                 _logger.LogDebug("Performing {Algorithm} search for query: '{Query}'", request.Algorithm, request.Query);
 
+                // ✅ Check cache
                 if (_enableCaching)
                 {
                     var cacheKey = GenerateCacheKey(request);
@@ -76,7 +86,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     }
                 }
 
-                // Token optimization - FIXED: Proper async/await
+                // ✅ Optimize query tokens
                 var optimizedQuery = await OptimizeQueryTokensAsync(request.Query, cancellationToken);
 
                 var libraryRequest = new SearchRequest
@@ -87,6 +97,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     MinimumRelevanceScore = request.MinimumRelevanceScore
                 };
 
+                // ✅ Handle embedding for semantic/hybrid search
                 if (request.Algorithm == SearchAlgorithm.Cosine || request.Algorithm == SearchAlgorithm.Hybrid)
                 {
                     try
@@ -111,6 +122,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     }
                 }
 
+                // ✅ Perform hybrid search
                 var libraryResults = await _hybridSearchEngine.HybridSearchAsync(libraryRequest, cancellationToken);
 
                 if (libraryResults?.Results == null)
@@ -131,6 +143,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 response.Metadata["TopResults"] = request.TopResults;
                 response.Metadata["FromCache"] = false;
 
+                // ✅ Cache results
                 if (_enableCaching && response.Results.Any())
                 {
                     var cacheKey = GenerateCacheKey(request);
@@ -255,6 +268,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     };
                 }
 
+                // ✅ Generate query variants (now with AI support)
                 var variants = await GenerateQueryVariantsAsync(query, context, cancellationToken);
                 var allResults = new List<List<SearchResult>>();
 
@@ -318,6 +332,9 @@ namespace AgenticAI.ContextEngineering.Core.Services
             }
         }
 
+        /// <summary>
+        /// ✅ ENHANCED: Generate query variants using AI + Rules
+        /// </summary>
         public async Task<List<string>> GenerateQueryVariantsAsync(
             string query,
             SearchContext? context = null,
@@ -330,15 +347,36 @@ namespace AgenticAI.ContextEngineering.Core.Services
 
             try
             {
+                // ✅ 1. AI-Powered Query Generation (NEW)
+                if (_enableAIQueryGeneration && _aiResponseService != null)
+                {
+                    try
+                    {
+                        var aiVariants = await GenerateAIQueryVariantsAsync(query, context, cancellationToken);
+                        foreach (var v in aiVariants)
+                        {
+                            if (!variants.Contains(v) && !string.IsNullOrEmpty(v))
+                                variants.Add(v);
+                        }
+                        _logger.LogInformation($"🤖 AI generated {aiVariants.Count} query variants for: '{query}'");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "AI query generation failed, falling back to rule-based");
+                    }
+                }
+
+                // ✅ 2. Context-based variants (existing)
                 if (context?.RecentUserMessages?.Any() == true)
                 {
                     var lastUserMsg = context.RecentUserMessages.LastOrDefault();
-                    if (!string.IsNullOrEmpty(lastUserMsg))
+                    if (!string.IsNullOrEmpty(lastUserMsg) && lastUserMsg != query)
                     {
                         variants.Add($"{lastUserMsg} {query}");
                     }
                 }
 
+                // ✅ 3. Stop words removal (existing)
                 var stopWords = new HashSet<string> { "the", "a", "an", "is", "are", "was", "were",
                     "and", "or", "but", "for", "nor", "on", "at", "to", "by", "with" };
                 var words = query.Split(' ');
@@ -346,6 +384,7 @@ namespace AgenticAI.ContextEngineering.Core.Services
                 if (!variants.Contains(cleanQuery) && cleanQuery != query)
                     variants.Add(cleanQuery);
 
+                // ✅ 4. Phrase extraction (existing)
                 if (words.Length > 3)
                 {
                     for (int i = 0; i < words.Length - 1; i++)
@@ -356,8 +395,8 @@ namespace AgenticAI.ContextEngineering.Core.Services
                     }
                 }
 
-                var maxVariants = _configuration.GetValue<int>("Search:MaxQueryVariants", 5);
-                variants = variants.Take(maxVariants).ToList();
+                // ✅ 5. Limit variants
+                variants = variants.Take(_maxQueryVariants).ToList();
             }
             catch (Exception ex)
             {
@@ -365,6 +404,125 @@ namespace AgenticAI.ContextEngineering.Core.Services
             }
 
             return variants.Distinct().ToList();
+        }
+
+        /// <summary>
+        /// ✅ Generate query variants using AI model
+        /// </summary>
+        private async Task<List<string>> GenerateAIQueryVariantsAsync(
+            string query,
+            SearchContext? context,
+            CancellationToken cancellationToken)
+        {
+            var prompt = BuildAIVariantPrompt(query, context);
+
+            var request = new AIResponseRequest
+            {
+                UserQuery = prompt,
+                SystemPrompt = "You are a search query generator. Generate alternative search queries based on the user's question and context. Return ONLY a JSON array of strings, no explanation.",
+                MaxTokens = 200,
+                Temperature = 0.3f,
+                UseCache = false
+            };
+
+            var response = await _aiResponseService.GenerateResponseAsync(request, cancellationToken);
+
+            if (!response.IsSuccess || string.IsNullOrEmpty(response.Response))
+            {
+                return new List<string>();
+            }
+
+            return ParseVariantsFromResponse(response.Response);
+        }
+
+        /// <summary>
+        /// ✅ Build prompt for AI variant generation
+        /// </summary>
+        private string BuildAIVariantPrompt(string query, SearchContext? context)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine("Generate alternative search queries for the following user question.");
+            sb.AppendLine();
+
+            if (context != null)
+            {
+                sb.AppendLine("### Conversation Context ###");
+                if (context.RecentUserMessages?.Any() == true)
+                {
+                    sb.AppendLine("Recent user messages:");
+                    foreach (var msg in context.RecentUserMessages.TakeLast(3))
+                    {
+                        sb.AppendLine($"  - {msg}");
+                    }
+                }
+                if (context.RecentBotMessages?.Any() == true)
+                {
+                    sb.AppendLine("Recent bot responses:");
+                    foreach (var msg in context.RecentBotMessages.TakeLast(3))
+                    {
+                        sb.AppendLine($"  - {msg}");
+                    }
+                }
+                sb.AppendLine();
+            }
+
+            sb.AppendLine($"### User Question ###");
+            sb.AppendLine(query);
+            sb.AppendLine();
+            sb.AppendLine($"Generate {_maxQueryVariants - 1} alternative search queries that:");
+            sb.AppendLine("1. Use different wording and phrasing");
+            sb.AppendLine("2. Capture different aspects of the question");
+            sb.AppendLine("3. Consider the conversation context");
+            sb.AppendLine("4. Would help find relevant information in a knowledge base");
+            sb.AppendLine();
+            sb.AppendLine("Return ONLY a JSON array of strings, like: [\"query1\", \"query2\", \"query3\"]");
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// ✅ Parse variants from AI response
+        /// </summary>
+        private List<string> ParseVariantsFromResponse(string response)
+        {
+            try
+            {
+                var cleaned = response.Trim();
+
+                // Remove markdown code blocks
+                if (cleaned.StartsWith("```json"))
+                    cleaned = cleaned.Replace("```json", "").Replace("```", "").Trim();
+                else if (cleaned.StartsWith("```"))
+                    cleaned = cleaned.Replace("```", "").Trim();
+
+                // Try JSON parsing
+                var result = JsonSerializer.Deserialize<List<string>>(cleaned);
+                if (result != null && result.Any())
+                {
+                    return result;
+                }
+
+                // Fallback: extract quoted strings
+                var matches = System.Text.RegularExpressions.Regex.Matches(cleaned, "\"([^\"]*)\"");
+                var extracted = new List<string>();
+                foreach (System.Text.RegularExpressions.Match match in matches)
+                {
+                    if (match.Success && match.Groups.Count > 1)
+                    {
+                        var value = match.Groups[1].Value;
+                        if (!string.IsNullOrEmpty(value))
+                            extracted.Add(value);
+                    }
+                }
+
+                return extracted.Any() ? extracted : new List<string>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse AI variants from response");
+                return new List<string>();
+            }
         }
 
         public List<SearchResult> FuseResults(List<List<SearchResult>> resultsLists)
@@ -433,20 +591,14 @@ namespace AgenticAI.ContextEngineering.Core.Services
         // PRIVATE HELPERS
         // ============================================================
 
-        // FIXED: Renamed to async method name and properly awaits
         private async Task<string> OptimizeQueryTokensAsync(string query, CancellationToken cancellationToken)
         {
             var key = $"{TOKEN_COUNT_PREFIX}{query.GetHashCode()}";
-
-            // FIXED: Use async method properly
             var count = await _tokenCache.GetCachedTokenCountAsync(key);
 
             if (count == 0)
             {
-                // FIXED: Use CountTokens method
                 count = _tokenCache.CountTokens(query);
-
-                // FIXED: Use async method properly
                 await _tokenCache.CacheTokenCountAsync(key, count, TimeSpan.FromHours(24));
             }
 

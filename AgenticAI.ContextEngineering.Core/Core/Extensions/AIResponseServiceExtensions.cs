@@ -71,38 +71,89 @@ namespace AgenticAI.ContextEngineering.Core.Extensions
             });
             Console.WriteLine("  ✅ AzureOpenAIClient registered");
 
-            // ✅ Register Base AI Response Service (NO dependencies on IAIResponseService)
+            // ✅ Register Base AI Response Service
             services.AddScoped<AIResponseService>();
             Console.WriteLine("  ✅ AIResponseService (Base) registered");
 
-            // ✅ Register TokenAwareAIResponseService with explicit dependencies
-            // Uses concrete AIResponseService, not IAIResponseService
+            // ✅ Register Token Cache
+            services.AddSingleton<ITokenCache, TokenCache>();
+            Console.WriteLine("  ✅ ITokenCache registered");
+
+            // ✅ Register Token Usage Tracker
+            services.AddSingleton<ITokenUsageTracker, TokenUsageTracker>();
+            Console.WriteLine("  ✅ ITokenUsageTracker registered");
+
+            // ✅ Register KV Cache components - NO CIRCULAR DEPENDENCY
+            services.AddMemoryCache();
+
+            // Register concrete cache implementations with their dependencies
+            services.AddSingleton<MemoryKVCache>();
+
+            // Register FileKVCache with the required string parameter
+            services.AddSingleton<FileKVCache>(sp =>
+            {
+                var logger = sp.GetService<ILogger<FileKVCache>>();
+                var cachePath = configuration["KVCache:FilePath"] ??
+                               configuration["Cache:FileCachePath"] ??
+                               "cache.json";
+                return new FileKVCache(cachePath, logger);
+            });
+
+            // Register DistributedKVCache with the required string parameter
+            services.AddSingleton<DistributedKVCache>(sp =>
+            {
+                var logger = sp.GetService<ILogger<DistributedKVCache>>();
+                var connectionString = configuration["KVCache:ConnectionString"] ??
+                                      configuration["Cache:ConnectionString"] ??
+                                      string.Empty;
+                return new DistributedKVCache(connectionString, logger);
+            });
+
+            // Register MultiTierKVCache as IKVCache using factory
+            services.AddSingleton<IKVCache>(sp =>
+            {
+                var memoryCache = sp.GetRequiredService<MemoryKVCache>();
+                var fileCache = sp.GetService<FileKVCache>();
+                var distributedCache = sp.GetService<DistributedKVCache>();
+                var logger = sp.GetService<ILogger<MultiTierKVCache>>();
+
+                return new MultiTierKVCache(memoryCache, fileCache, distributedCache, logger);
+            });
+            Console.WriteLine("  ✅ IKVCache registered (MultiTierKVCache)");
+
+            // ✅ Register TokenAwareAIResponseService
             services.AddScoped<TokenAwareAIResponseService>(sp =>
             {
                 var baseService = sp.GetRequiredService<AIResponseService>();
                 var tokenCache = sp.GetRequiredService<ITokenCache>();
-                var logger = sp.GetRequiredService<ILogger<TokenAwareAIResponseService>>();
-                return new TokenAwareAIResponseService(baseService, tokenCache, logger);
+                var tokenTracker = sp.GetRequiredService<ITokenUsageTracker>();
+                var kvCache = sp.GetService<IKVCache>();
+                var logger = sp.GetService<ILogger<TokenAwareAIResponseService>>();
+
+                return new TokenAwareAIResponseService(
+                    baseService,
+                    tokenCache,
+                    tokenTracker,
+                    kvCache,
+                    logger
+                );
             });
             Console.WriteLine("  ✅ TokenAwareAIResponseService registered");
 
-            // ✅ Register CachedAIResponseService with explicit dependencies
-            // Uses concrete TokenAwareAIResponseService, not IAIResponseService
+            // ✅ Register CachedAIResponseService
             services.AddScoped<CachedAIResponseService>(sp =>
             {
                 var tokenAware = sp.GetRequiredService<TokenAwareAIResponseService>();
-                var kvCache = sp.GetRequiredService<IKVCache>();
-                var logger = sp.GetRequiredService<ILogger<CachedAIResponseService>>();
+                var kvCache = sp.GetService<IKVCache>();
+                var logger = sp.GetService<ILogger<CachedAIResponseService>>();
                 return new CachedAIResponseService(tokenAware, kvCache, logger);
             });
             Console.WriteLine("  ✅ CachedAIResponseService registered");
 
-            // ✅ Register IAIResponseService to resolve to CachedAIResponseService
+            // ✅ Register IAIResponseService
             services.AddScoped<IAIResponseService>(sp =>
             {
-                Console.WriteLine("    🔍 Resolving IAIResponseService...");
                 var cachedService = sp.GetRequiredService<CachedAIResponseService>();
-                Console.WriteLine("    ✅ IAIResponseService resolved to CachedAIResponseService");
                 return cachedService;
             });
             Console.WriteLine("  ✅ IAIResponseService registered as Cached");
@@ -120,12 +171,51 @@ namespace AgenticAI.ContextEngineering.Core.Extensions
             return services;
         }
 
+        public static IServiceCollection AddTokenUsageTracker(
+            this IServiceCollection services)
+        {
+            services.AddSingleton<ITokenUsageTracker, TokenUsageTracker>();
+            return services;
+        }
+
         public static IServiceCollection AddKVCaching(
             this IServiceCollection services,
+            IConfiguration configuration,
             Action<KVCacheOptions>? configure = null)
         {
             services.AddMemoryCache();
-            services.AddSingleton<IKVCache, MultiTierKVCache>();
+
+            // Register concrete cache implementations
+            services.AddSingleton<MemoryKVCache>();
+
+            services.AddSingleton<FileKVCache>(sp =>
+            {
+                var logger = sp.GetService<ILogger<FileKVCache>>();
+                var cachePath = configuration["KVCache:FilePath"] ??
+                               configuration["Cache:FileCachePath"] ??
+                               "cache.json";
+                return new FileKVCache(cachePath, logger);
+            });
+
+            services.AddSingleton<DistributedKVCache>(sp =>
+            {
+                var logger = sp.GetService<ILogger<DistributedKVCache>>();
+                var connectionString = configuration["KVCache:ConnectionString"] ??
+                                      configuration["Cache:ConnectionString"] ??
+                                      string.Empty;
+                return new DistributedKVCache(connectionString, logger);
+            });
+
+            // Register MultiTierKVCache as IKVCache
+            services.AddSingleton<IKVCache>(sp =>
+            {
+                var memoryCache = sp.GetRequiredService<MemoryKVCache>();
+                var fileCache = sp.GetService<FileKVCache>();
+                var distributedCache = sp.GetService<DistributedKVCache>();
+                var logger = sp.GetService<ILogger<MultiTierKVCache>>();
+
+                return new MultiTierKVCache(memoryCache, fileCache, distributedCache, logger);
+            });
 
             if (configure != null)
             {

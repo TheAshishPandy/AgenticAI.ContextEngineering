@@ -124,16 +124,31 @@ namespace AgenticAI.ContextEngineering.Core.Extensions
                 });
                 Console.WriteLine("  ✅ ITokenCache registered");
 
-                // 4️⃣ Register Search Services
+                // ============================================================
+                // ✅ 4️⃣ Register Search Services - FIXED: Proper lifetimes
+                // ============================================================
+                // ✅ Stateless, thread-safe services = Singleton
                 services.AddSingleton<LexicalSearch>();
                 services.AddSingleton<SemanticSearch>();
-                services.AddSingleton<HybridSearchEngine>();
-                services.AddSingleton<IEmbeddingGenerator,EmbeddingGenerator>();
+                services.AddSingleton<IEmbeddingGenerator, EmbeddingGenerator>();
+
+                // ✅ HybridSearchEngine depends on IAIResponseService (Scoped)
+                // So it MUST be Scoped
+                services.AddScoped<HybridSearchEngine>();
+
+                // ✅ Search services are Scoped
                 services.AddScoped<ISearchService, SearchService>();
                 services.AddScoped<CachedSearchService>();
-                Console.WriteLine("  ✅ Search services registered");
 
-                // 5️⃣ Register FAQ Service
+                Console.WriteLine("  ✅ Search services registered (Scoped)");
+
+                // ============================================================
+                // ✅ 5️⃣ Register IAIResponseService as Scoped
+                // ============================================================
+                services.AddScoped<IAIResponseService, AIResponseService>();
+                Console.WriteLine("  ✅ IAIResponseService registered (Scoped)");
+
+                // 6️⃣ Register FAQ Service
                 services.Configure<FaqOptions>(options =>
                 {
                     options.FaqFilePath = configuration.GetValue<string>("FaqService:FaqFilePath") ?? "Data/faq.json";
@@ -146,11 +161,11 @@ namespace AgenticAI.ContextEngineering.Core.Extensions
                 services.AddSingleton<IFaqService, CachedFaqService>();
                 Console.WriteLine("  ✅ FAQ service registered");
 
-                // 6️⃣ Register AI Services - FIXED: Use the extension method directly
+                // 7️⃣ Register AI Services
                 services.AddAIResponseServiceWithCaching(configuration, "AIResponse");
                 Console.WriteLine("  ✅ AI services registered");
 
-                // 7️⃣ Register Token Optimized Service
+                // 8️⃣ Register Token Optimized Service
                 services.AddScoped<ITokenOptimizedService, TokenOptimizedService>();
                 Console.WriteLine("  ✅ TokenOptimizedService registered");
 

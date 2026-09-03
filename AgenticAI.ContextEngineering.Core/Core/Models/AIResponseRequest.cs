@@ -17,7 +17,7 @@ namespace AgenticAI.ContextEngineering.Core.Models
         public List<ConversationMessage> ConversationHistory { get; set; } = new();
         public string ConversationSummary { get; set; } = string.Empty;
         public float Temperature { get; set; } = 0.2f;
-        public int MaxTokens { get; set; } = 500;
+        public int MaxTokens { get; set; } = 150;
         public bool RemoveUrlsFromResponse { get; set; } = true;
         public bool PrioritizeDynamicData { get; set; } = true;
         public List<string> DynamicDataKeywords { get; set; } = new()
@@ -28,6 +28,11 @@ namespace AgenticAI.ContextEngineering.Core.Models
         public bool Stream { get; set; } = false;
         public CancellationToken CancellationToken { get; set; }
         public Dictionary<string, object> Parameters { get; set; } = new();
+
+        public string LastBotQuestion { get; set; } = string.Empty;
+        public string RecentUserMessages { get; set; } = string.Empty;
+        public string IntentType { get; set; } = string.Empty;
+        public bool IsFollowUp { get; set; }
     }
 
     public class ConversationMessage

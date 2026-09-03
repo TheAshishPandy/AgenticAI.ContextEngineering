@@ -11,118 +11,195 @@ namespace AgenticAI.ContextEngineering.Demo.Services
     public class DemoRunner
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly List<IDemo> _demos;
+        private readonly Dictionary<string, Type> _demoRegistry;
 
         public DemoRunner(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
-            _demos = new List<IDemo>();
-            RegisterDemos();
+            _demoRegistry = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase)
+            {
+                // Main demos
+                { "kv", typeof(KVCacheDemo) },
+                { "token", typeof(TokenCacheDemo) },
+                { "ai", typeof(AIResponseDemo) },
+                { "search", typeof(SearchDemo) },
+                { "faq", typeof(FAQDemo) },
+                { "optimized", typeof(TokenOptimizedDemo) },
+                { "stats", typeof(StatisticsDemo) },
+                { "clear", typeof(ClearCacheDemo) },
+                { "conv", typeof(ConversationStatsDemo) },  // NEW
+                { "conversation", typeof(ConversationStatsDemo) },  // NEW
+                { "conv-stats", typeof(ConversationStatsDemo) },  // NEW
+                { "conversations", typeof(ConversationStatsDemo) },  // NEW
+                
+                // Legacy/backward compatibility
+                { "kv-test", typeof(KVCacheDemo) },
+                { "token-cache", typeof(AIResponseDemo) },
+                { "token-stats", typeof(StatisticsDemo) },
+                { "token-clear", typeof(ClearCacheDemo) },
+                { "token-compare", typeof(AIResponseDemo) },
+                { "token-optimized", typeof(TokenOptimizedDemo) }
+            };
         }
 
-        private void RegisterDemos()
-        {
-            // Register all demos in order
-            AddDemo<KVCacheDemo>();
-            AddDemo<TokenCacheDemo>();
-            AddDemo<AIResponseDemo>();
-            AddDemo<SearchDemo>();
-            AddDemo<FAQDemo>();
-            AddDemo<TokenOptimizedDemo>();
-            AddDemo<StatisticsDemo>();
-            AddDemo<ClearCacheDemo>();
-        }
-
-        private void AddDemo<T>() where T : IDemo
+        public async Task RunDemoAsync<T>() where T : IDemo
         {
             try
             {
                 var demo = _serviceProvider.GetService<T>();
-                if (demo != null)
+                if (demo == null)
                 {
-                    _demos.Add(demo);
+                    Console.WriteLine($"❌ Demo {typeof(T).Name} not found");
+                    return;
                 }
+
+                if (!demo.IsConfigured)
+                {
+                    Console.WriteLine($"❌ Demo {demo.Name} is not configured. Status: {demo.ConfigurationStatus}");
+                    return;
+                }
+
+                Console.WriteLine($"\n📌 {demo.Name}");
+                Console.WriteLine($"   {demo.Description}");
+                Console.WriteLine($"   Status: {demo.ConfigurationStatus}");
+
+                await demo.RunAsync();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"  ⚠️ Failed to register {typeof(T).Name}: {ex.Message}");
+                Console.WriteLine($"❌ Error running demo {typeof(T).Name}: {ex.Message}");
+                Console.WriteLine($"   Stack: {ex.StackTrace}");
+            }
+        }
+
+        public async Task RunDemoByKeyAsync(string key)
+        {
+            if (!_demoRegistry.TryGetValue(key, out var demoType))
+            {
+                Console.WriteLine($"❌ Demo '{key}' not found. Use 'list' to see available demos.");
+                return;
+            }
+
+            var demo = _serviceProvider.GetService(demoType) as IDemo;
+            if (demo == null)
+            {
+                Console.WriteLine($"❌ Could not instantiate demo '{key}'");
+                return;
+            }
+
+            await RunDemoAsync(demo);
+        }
+
+        private async Task RunDemoAsync(IDemo demo)
+        {
+            try
+            {
+                if (!demo.IsConfigured)
+                {
+                    Console.WriteLine($"❌ Demo {demo.Name} is not configured. Status: {demo.ConfigurationStatus}");
+                    return;
+                }
+
+                Console.WriteLine($"\n📌 {demo.Name}");
+                Console.WriteLine($"   {demo.Description}");
+                Console.WriteLine($"   Status: {demo.ConfigurationStatus}");
+
+                await demo.RunAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error running demo {demo.Name}: {ex.Message}");
+                Console.WriteLine($"   Stack: {ex.StackTrace}");
             }
         }
 
         public async Task RunAllDemosAsync()
         {
-            Console.WriteLine("\n" + new string('═', 70));
+            Console.WriteLine("\n══════════════════════════════════════════════════════════════════════");
             Console.WriteLine("  🚀 AGENTICAI CONTEXT ENGINEERING - COMPLETE DEMO");
-            Console.WriteLine(new string('═', 70));
+            Console.WriteLine("══════════════════════════════════════════════════════════════════════\n");
 
-            var totalDemos = _demos.Count;
-            var passedDemos = 0;
-            var failedDemos = 0;
-
-            foreach (var demo in _demos)
+            var demos = new List<IDemo>();
+            var allTypes = new[]
             {
-                Console.WriteLine($"\n📌 {demo.Name}");
-                Console.WriteLine($"   {demo.Description}");
-                Console.WriteLine($"   Status: {demo.ConfigurationStatus}");
+                typeof(KVCacheDemo),
+                typeof(TokenCacheDemo),
+                typeof(AIResponseDemo),
+                typeof(SearchDemo),
+                typeof(FAQDemo),
+                typeof(TokenOptimizedDemo),
+                typeof(StatisticsDemo),
+                typeof(ConversationStatsDemo),  // NEW
+                typeof(ClearCacheDemo)
+            };
 
-                if (!demo.IsConfigured)
-                {
-                    Console.WriteLine($"   ⚠️ Skipping - Not configured");
-                    continue;
-                }
+            int passed = 0;
+            int failed = 0;
+            int skipped = 0;
 
+            foreach (var type in allTypes)
+            {
                 try
                 {
+                    var demo = _serviceProvider.GetService(type) as IDemo;
+                    if (demo == null)
+                    {
+                        Console.WriteLine($"❌ Could not resolve {type.Name}");
+                        failed++;
+                        continue;
+                    }
+
+                    if (!demo.IsConfigured)
+                    {
+                        Console.WriteLine($"\n⚠️ Skipping {demo.Name} - {demo.ConfigurationStatus}");
+                        skipped++;
+                        continue;
+                    }
+
+                    Console.WriteLine($"\n📌 {demo.Name}");
+                    Console.WriteLine($"   {demo.Description}");
+                    Console.WriteLine($"   Status: {demo.ConfigurationStatus}");
+
                     await demo.RunAsync();
-                    passedDemos++;
+                    passed++;
                     Console.WriteLine($"   ✅ {demo.Name} completed successfully");
                 }
                 catch (Exception ex)
                 {
-                    failedDemos++;
-                    Console.WriteLine($"   ❌ {demo.Name} failed: {ex.Message}");
+                    Console.WriteLine($"❌ Error running {type.Name}: {ex.Message}");
+                    failed++;
                 }
             }
 
-            Console.WriteLine("\n" + new string('═', 70));
-            Console.WriteLine($"  📊 Summary: {passedDemos} passed, {failedDemos} failed, {totalDemos - passedDemos - failedDemos} skipped");
-            //Console.WriteLine($"  {+ (failedDemos == 0 ? " SUCCESSFULLY!" : " WITH ERRORS")});
-            Console.WriteLine(new string('═', 70));
-        }
-
-        public async Task RunDemoAsync<T>() where T : IDemo
-        {
-            var demo = _demos.FirstOrDefault(d => d is T);
-            if (demo == null)
-            {
-                Console.WriteLine($"❌ Demo {typeof(T).Name} not found");
-                return;
-            }
-
-            Console.WriteLine($"\n📌 {demo.Name}");
-            Console.WriteLine($"   {demo.Description}");
-            Console.WriteLine($"   Status: {demo.ConfigurationStatus}");
-
-            if (!demo.IsConfigured)
-            {
-                Console.WriteLine($"   ⚠️ Skipping - Not configured");
-                return;
-            }
-
-            await demo.RunAsync();
+            Console.WriteLine("\n══════════════════════════════════════════════════════════════════════");
+            Console.WriteLine($"  📊 Summary: {passed} passed, {failed} failed, {skipped} skipped");
+            Console.WriteLine("══════════════════════════════════════════════════════════════════════");
         }
 
         public void ListDemos()
         {
             Console.WriteLine("\n📋 Available Demos:");
-            Console.WriteLine(new string('─', 40));
+            Console.WriteLine(new string('═', 60));
 
-            foreach (var demo in _demos)
+            var maxKeyLength = _demoRegistry.Keys.Max(k => k.Length);
+            foreach (var kvp in _demoRegistry.OrderBy(k => k.Key))
             {
-                var status = demo.IsConfigured ? "✅" : "❌";
-                Console.WriteLine($"  {status} {demo.Name}");
-                Console.WriteLine($"     {demo.Description}");
+                try
+                {
+                    var demo = _serviceProvider.GetService(kvp.Value) as IDemo;
+                    var status = demo?.IsConfigured == true ? "✅" : "❌";
+                    var name = demo?.Name ?? kvp.Value.Name;
+                    Console.WriteLine($"  {kvp.Key.PadRight(maxKeyLength + 2)} {status} {name}");
+                }
+                catch
+                {
+                    Console.WriteLine($"  {kvp.Key.PadRight(maxKeyLength + 2)} ⚠️ {kvp.Value.Name}");
+                }
             }
+
+            Console.WriteLine("\n💡 Usage: dotnet run -- <command>");
+            Console.WriteLine("   Example: dotnet run -- conv");
+            Console.WriteLine("   Example: dotnet run -- all");
         }
     }
 }
